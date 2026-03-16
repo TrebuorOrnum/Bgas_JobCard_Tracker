@@ -11,50 +11,40 @@
 <title>Brackenfell Gas – Job Cards</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <style>
   :root {
-    --bg:        #0d1117;
-    --surface:   #161b22;
-    --border:    #30363d;
-    --orange:    #f97316;
-    --orange-d:  #c2510d;
-    --green:     #22c55e;
-    --yellow:    #eab308;
-    --blue:      #3b82f6;
-    --red:       #ef4444;
-    --purple:    #a855f7;
-    --teal:      #14b8a6;
-    --text:      #e6edf3;
-    --muted:     #8b949e;
-    --radius:    10px;
+    --bg:       #0d1117; --surface: #161b22; --border:  #30363d;
+    --orange:   #f97316; --green:   #22c55e; --yellow:  #eab308;
+    --blue:     #3b82f6; --red:     #ef4444; --purple:  #a855f7;
+    --teal:     #14b8a6; --text:    #e6edf3; --muted:   #8b949e;
+    --radius:   10px;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; }
 
-  /* ── HEADER ─────────────────────────────── */
-  header {
-    position: sticky; top: 0; z-index: 100;
-    background: var(--surface);
-    border-bottom: 2px solid var(--orange);
-    padding: 0 16px;
-    display: flex; align-items: center; justify-content: space-between;
-    height: 58px;
-  }
+  /* HEADER */
+  header { position: sticky; top: 0; z-index: 100; background: var(--surface); border-bottom: 2px solid var(--orange); padding: 0 16px; display: flex; align-items: center; justify-content: space-between; height: 58px; }
   .logo { display: flex; align-items: center; gap: 10px; }
-  .logo-flame { font-size: 24px; }
+  .logo-icon { width: 36px; height: 36px; flex-shrink: 0; }
   .logo-text { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.04em; line-height: 1; }
   .logo-text span { color: var(--orange); }
   .logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
-  .header-right { display: flex; align-items: center; gap: 10px; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
   .stat-badge { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; color: var(--muted); }
   .stat-badge b { color: var(--orange); font-weight: 700; }
+  .sync-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background .4s; }
+  .sync-dot.live  { background: var(--green); box-shadow: 0 0 7px var(--green); }
+  .sync-dot.error { background: var(--red); }
 
-  /* ── NAV TABS ────────────────────────────── */
-  .tab-bar {
-    display: flex; background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto; scrollbar-width: none;
-  }
+  /* SETUP BANNER */
+  #setupBanner { background: rgba(59,130,246,.12); border-bottom: 1px solid rgba(59,130,246,.3); padding: 10px 16px; font-size: 13px; color: #93c5fd; display: none; }
+  #setupBanner a { color: #60a5fa; text-decoration: underline; cursor: pointer; }
+
+  /* TABS */
+  .tab-bar { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
   .tab-bar::-webkit-scrollbar { display: none; }
   .tab { flex: 0 0 auto; padding: 10px 16px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all .2s; }
   .tab:hover { color: var(--text); }
@@ -62,49 +52,26 @@
   .tab-count { background: var(--border); color: var(--text); border-radius: 10px; padding: 1px 6px; font-size: 11px; margin-left: 5px; }
   .tab.active .tab-count { background: var(--orange); color: #000; }
 
-  /* ── MAIN ────────────────────────────────── */
   main { padding: 16px; max-width: 700px; margin: 0 auto; }
 
-  /* ── FAB ─────────────────────────────────── */
-  .fab {
-    position: fixed; bottom: 24px; right: 20px; z-index: 200;
-    width: 60px; height: 60px; border-radius: 50%;
-    background: var(--orange); border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px; box-shadow: 0 4px 20px rgba(249,115,22,.5);
-    transition: transform .2s, box-shadow .2s;
-  }
+  /* FAB */
+  .fab { position: fixed; bottom: 24px; right: 20px; z-index: 200; width: 60px; height: 60px; border-radius: 50%; background: var(--orange); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 20px rgba(249,115,22,.5); transition: transform .2s, box-shadow .2s; }
   .fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(249,115,22,.7); }
   .fab:active { transform: scale(.95); }
 
-  /* ── SEARCH ──────────────────────────────── */
+  /* SEARCH */
   .search-bar { position: relative; margin-bottom: 14px; }
-  .search-bar input {
-    width: 100%; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); color: var(--text); font-family: 'Barlow', sans-serif;
-    font-size: 15px; padding: 10px 16px 10px 40px; outline: none; transition: border-color .2s;
-  }
+  .search-bar input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; padding: 10px 16px 10px 40px; outline: none; transition: border-color .2s; }
   .search-bar input:focus { border-color: var(--orange); }
   .search-bar input::placeholder { color: var(--muted); }
   .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 16px; pointer-events: none; }
 
-  /* ── JOB CARD ────────────────────────────── */
-  .job-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); margin-bottom: 12px;
-    overflow: hidden; transition: border-color .2s;
-  }
+  /* JOB CARD */
+  .job-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; transition: border-color .2s; }
   .job-card:hover { border-color: var(--muted); }
   .job-card-top { display: flex; gap: 12px; padding: 14px; }
-  .job-thumb {
-    width: 72px; height: 72px; border-radius: 6px; object-fit: cover;
-    background: var(--bg); border: 1px solid var(--border); flex-shrink: 0;
-    cursor: pointer;
-  }
-  .job-thumb.placeholder {
-    display: flex; align-items: center; justify-content: center;
-    color: var(--muted); font-size: 28px;
-  }
+  .job-thumb { width: 72px; height: 72px; border-radius: 6px; object-fit: cover; background: var(--bg); border: 1px solid var(--border); flex-shrink: 0; cursor: pointer; }
+  .job-thumb.placeholder { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 28px; }
   .job-info { flex: 1; min-width: 0; }
   .job-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
   .job-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; color: var(--orange); }
@@ -113,228 +80,231 @@
   .job-contact { font-size: 13px; color: var(--muted); }
   .job-contact a { color: var(--orange); text-decoration: none; }
   .job-bottom { padding: 0 14px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-  .status-pill {
-    display: inline-flex; align-items: center; gap: 5px;
-    border-radius: 20px; padding: 4px 12px;
-    font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 12px;
-    letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid transparent;
-  }
+  .status-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 4px 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid transparent; }
   .job-actions { display: flex; gap: 6px; }
-  .icon-btn {
-    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-    padding: 6px 8px; cursor: pointer; color: var(--muted); font-size: 15px;
-    transition: all .15s;
-  }
+  .icon-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; cursor: pointer; color: var(--muted); font-size: 15px; transition: all .15s; }
   .icon-btn:hover { color: var(--text); border-color: var(--muted); }
   .icon-btn.danger:hover { color: var(--red); border-color: var(--red); }
+  .s-spares  { background: rgba(234,179,8,.12);  color: var(--yellow); border-color: rgba(234,179,8,.3); }
+  .s-quote   { background: rgba(59,130,246,.12); color: var(--blue);   border-color: rgba(59,130,246,.3); }
+  .s-goahead { background: rgba(34,197,94,.12);  color: var(--green);  border-color: rgba(34,197,94,.3); }
+  .s-onhold  { background: rgba(168,85,247,.12); color: var(--purple); border-color: rgba(168,85,247,.3); }
+  .s-collect { background: rgba(20,184,166,.12); color: var(--teal);   border-color: rgba(20,184,166,.3); }
+  .s-new     { background: rgba(249,115,22,.12); color: var(--orange); border-color: rgba(249,115,22,.3); }
 
-  /* status colours */
-  .s-spares    { background: rgba(234,179,8,.12);  color: var(--yellow);  border-color: rgba(234,179,8,.3); }
-  .s-quote     { background: rgba(59,130,246,.12); color: var(--blue);    border-color: rgba(59,130,246,.3); }
-  .s-goahead   { background: rgba(34,197,94,.12);  color: var(--green);   border-color: rgba(34,197,94,.3); }
-  .s-onhold    { background: rgba(168,85,247,.12); color: var(--purple);  border-color: rgba(168,85,247,.3); }
-  .s-collect   { background: rgba(20,184,166,.12); color: var(--teal);    border-color: rgba(20,184,166,.3); }
-  .s-new       { background: rgba(249,115,22,.12); color: var(--orange);  border-color: rgba(249,115,22,.3); }
-
-  /* ── EMPTY STATE ─────────────────────────── */
   .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
   .empty-icon { font-size: 52px; margin-bottom: 12px; }
   .empty h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; color: var(--text); margin-bottom: 6px; }
+  .loading { text-align: center; padding: 48px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 18px; letter-spacing: .05em; }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── MODAL ───────────────────────────────── */
-  .overlay {
-    position: fixed; inset: 0; z-index: 300;
-    background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
-    display: flex; align-items: flex-end; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity .25s;
-  }
+  /* MODAL */
+  .overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.75); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
   .overlay.open { opacity: 1; pointer-events: all; }
-  .modal {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 18px 18px 0 0; width: 100%; max-width: 700px;
-    max-height: 95vh; overflow-y: auto;
-    transform: translateY(40px); transition: transform .3s cubic-bezier(.22,1,.36,1);
-    padding: 24px 20px 36px;
-  }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px 18px 0 0; width: 100%; max-width: 700px; max-height: 95vh; overflow-y: auto; transform: translateY(40px); transition: transform .3s cubic-bezier(.22,1,.36,1); padding: 24px 20px 36px; }
   .overlay.open .modal { transform: translateY(0); }
   .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
   .modal h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 24px; margin-bottom: 18px; }
-
-  /* ── FORM ────────────────────────────────── */
   .form-group { margin-bottom: 14px; }
   .form-group label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-  .form-group input, .form-group select, .form-group textarea {
-    width: 100%; background: var(--bg); border: 1px solid var(--border);
-    border-radius: var(--radius); color: var(--text); font-family: 'Barlow', sans-serif;
-    font-size: 15px; padding: 10px 14px; outline: none; transition: border-color .2s;
-    -webkit-appearance: none;
-  }
-  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--orange); }
-  .form-group select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238b949e' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
-  select option { background: var(--surface); }
+  .form-group input, .form-group textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; padding: 10px 14px; outline: none; transition: border-color .2s; -webkit-appearance: none; }
+  .form-group input:focus, .form-group textarea:focus { border-color: var(--orange); }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-  /* ── PHOTO CAPTURE ───────────────────────── */
-  .photo-zone {
-    border: 2px dashed var(--border); border-radius: var(--radius);
-    padding: 24px; text-align: center; cursor: pointer; transition: border-color .2s;
-    position: relative;
-  }
+  .photo-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; cursor: pointer; transition: border-color .2s; position: relative; }
   .photo-zone:hover { border-color: var(--orange); }
   .photo-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
   .photo-zone-icon { font-size: 36px; margin-bottom: 8px; }
   .photo-zone p { color: var(--muted); font-size: 14px; }
   .photo-zone p strong { color: var(--orange); }
   .photo-preview { width: 100%; max-height: 260px; object-fit: cover; border-radius: var(--radius); display: none; margin-top: 12px; }
-
-  /* ── STATUS PICKER ───────────────────────── */
   .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .status-opt {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 12px; border-radius: var(--radius);
-    border: 1.5px solid var(--border); cursor: pointer; transition: all .15s;
-    font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 14px;
-  }
+  .status-opt { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius); border: 1.5px solid var(--border); cursor: pointer; transition: all .15s; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 14px; }
   .status-opt:hover { border-color: var(--muted); }
   .status-opt.selected { border-color: var(--orange); background: rgba(249,115,22,.1); color: var(--orange); }
   .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-
-  /* ── BTN ─────────────────────────────────── */
   .btn { width: 100%; padding: 13px; border: none; border-radius: var(--radius); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; margin-top: 6px; transition: opacity .2s; }
   .btn-primary { background: var(--orange); color: #000; }
   .btn-primary:hover { opacity: .88; }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
   .btn-ghost { background: var(--bg); color: var(--muted); border: 1px solid var(--border); margin-top: 8px; }
 
-  /* ── LIGHTBOX ────────────────────────────── */
+  /* LIGHTBOX */
   .lightbox { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.92); display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
   .lightbox img { max-width: 95vw; max-height: 92vh; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,.8); }
   .lightbox-close { position: absolute; top: 16px; right: 18px; font-size: 28px; color: #fff; cursor: pointer; }
 
-  /* ── STATUS MODAL ────────────────────────── */
-  .status-modal-overlay {
-    position: fixed; inset: 0; z-index: 400;
-    background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity .2s;
-    padding: 20px;
-  }
+  /* STATUS QUICK-CHANGE */
+  .status-modal-overlay { position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; padding: 20px; }
   .status-modal-overlay.open { opacity: 1; pointer-events: all; }
-  .status-modal {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 14px; padding: 20px; width: 100%; max-width: 360px;
-  }
+  .status-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; width: 100%; max-width: 360px; }
   .status-modal h3 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 19px; margin-bottom: 14px; }
 
-  @media (max-width: 400px) {
-    .form-row { grid-template-columns: 1fr; }
-    .status-grid { grid-template-columns: 1fr; }
-  }
+  /* FIREBASE SETUP MODAL */
+  #firebaseSetupOverlay { position: fixed; inset: 0; z-index: 600; background: rgba(0,0,0,.93); display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+  .setup-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; width: 100%; max-width: 500px; }
+  .setup-box h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+  .setup-box .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 18px; line-height: 1.6; }
+  .setup-steps { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px 14px 28px; margin-bottom: 16px; }
+  .setup-steps li { color: var(--muted); font-size: 13px; line-height: 2.2; }
+  .setup-steps li a { color: #60a5fa; }
+  .setup-steps li b { color: var(--text); }
+  .setup-steps li code { background: rgba(255,255,255,.06); border-radius: 4px; padding: 1px 5px; font-size: 12px; color: #93c5fd; }
+  .setup-box textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: monospace; font-size: 12px; padding: 12px; outline: none; resize: vertical; min-height: 120px; transition: border-color .2s; }
+  .setup-box textarea:focus { border-color: var(--orange); }
+  .setup-err { color: var(--red); font-size: 13px; margin-top: 8px; display: none; }
+  .divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--muted); font-size: 12px; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  @media (max-width: 400px) { .form-row { grid-template-columns: 1fr; } .status-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
+<!-- ═══ FIREBASE SETUP ═══════════════════════════════ -->
+<div id="firebaseSetupOverlay">
+  <div class="setup-box">
+    <h2>
+      <svg width="28" height="34" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="so" x1="18" y1="44" x2="18" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#1d4ed8"/><stop offset="50%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#93c5fd"/></linearGradient>
+          <linearGradient id="sm" x1="18" y1="40" x2="18" y2="8" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#1e40af"/><stop offset="60%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#bfdbfe"/></linearGradient>
+          <linearGradient id="si" x1="18" y1="38" x2="18" y2="18" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#dbeafe"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0.9"/></linearGradient>
+        </defs>
+        <path d="M18 2 C18 2 28 10 28 22 C28 30 24 38 18 42 C12 38 8 30 8 22 C8 10 18 2 18 2Z" fill="url(#so)"/>
+        <path d="M18 8 C18 8 25 15 25 24 C25 30 22 36 18 39 C14 36 11 30 11 24 C11 15 18 8 18 8Z" fill="url(#sm)"/>
+        <path d="M18 18 C18 18 22 22 22 27 C22 31 20.5 34.5 18 36.5 C15.5 34.5 14 31 14 27 C14 22 18 18 18 18Z" fill="url(#si)" opacity="0.9"/>
+        <ellipse cx="18" cy="28" rx="2.5" ry="4" fill="white" opacity="0.7"/>
+      </svg>
+      Connect to Cloud
+    </h2>
+    <p class="subtitle">To sync job cards across all staff phones and PCs in real-time, connect a free <b style="color:var(--text)">Firebase</b> project. One-time setup — takes about 3 minutes.</p>
+    <ol class="setup-steps">
+      <li>Open <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> and sign in</li>
+      <li>Click <b>Add project</b> → name it <b>brackenfell-gas</b> → Continue</li>
+      <li>In your project: click <b>⟨/⟩ Web</b> → register app → copy the <code>firebaseConfig</code></li>
+      <li>In the left menu: <b>Firestore Database</b> → Create database → <b>Start in test mode</b></li>
+      <li>In the left menu: <b>Storage</b> → Get started → <b>Start in test mode</b></li>
+      <li>Paste your config below and click <b>Connect</b></li>
+    </ol>
+    <label style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Paste firebaseConfig here</label>
+    <textarea id="fbConfigInput" placeholder='{
+  apiKey: "AIzaSy...",
+  authDomain: "your-app.firebaseapp.com",
+  projectId: "your-app",
+  storageBucket: "your-app.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123:web:abc123"
+}'></textarea>
+    <div class="setup-err" id="fbErr">⚠ Invalid config — paste the full firebaseConfig object.</div>
+    <button class="btn btn-primary" style="margin-top:14px;" onclick="connectFirebase()">🔗 Connect &amp; Sync</button>
+    <div class="divider">or</div>
+    <button class="btn btn-ghost" onclick="useDemoMode()" style="margin-top:0;">Use Offline Mode (this device only)</button>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header>
   <div class="logo">
-    <div class="logo-flame">🔥</div>
+    <svg class="logo-icon" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="fo" x1="18" y1="44" x2="18" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#1d4ed8"/>
+          <stop offset="50%" stop-color="#3b82f6"/>
+          <stop offset="100%" stop-color="#93c5fd"/>
+        </linearGradient>
+        <linearGradient id="fm" x1="18" y1="40" x2="18" y2="8" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#1e40af"/>
+          <stop offset="60%" stop-color="#60a5fa"/>
+          <stop offset="100%" stop-color="#bfdbfe"/>
+        </linearGradient>
+        <linearGradient id="fi" x1="18" y1="38" x2="18" y2="18" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#dbeafe"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0.9"/>
+        </linearGradient>
+        <filter id="fg"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <path d="M18 2 C18 2 28 10 28 22 C28 30 24 38 18 42 C12 38 8 30 8 22 C8 10 18 2 18 2Z" fill="url(#fo)" filter="url(#fg)"/>
+      <path d="M18 8 C18 8 25 15 25 24 C25 30 22 36 18 39 C14 36 11 30 11 24 C11 15 18 8 18 8Z" fill="url(#fm)"/>
+      <path d="M18 18 C18 18 22 22 22 27 C22 31 20.5 34.5 18 36.5 C15.5 34.5 14 31 14 27 C14 22 18 18 18 18Z" fill="url(#fi)" opacity="0.9"/>
+      <ellipse cx="18" cy="28" rx="2.5" ry="4" fill="white" opacity="0.72"/>
+    </svg>
     <div>
       <div class="logo-text">Brackenfell <span>Gas</span></div>
       <div class="logo-sub">Job Card Manager</div>
     </div>
   </div>
   <div class="header-right">
+    <div class="sync-dot" id="syncDot" title="Sync status"></div>
     <div class="stat-badge">Total: <b id="totalCount">0</b></div>
   </div>
 </header>
 
-<!-- TAB BAR -->
-<div class="tab-bar" id="tabBar">
-  <div class="tab active" data-filter="all" onclick="setFilter('all')">All <span class="tab-count" id="cnt-all">0</span></div>
-  <div class="tab" data-filter="new" onclick="setFilter('new')">New <span class="tab-count" id="cnt-new">0</span></div>
-  <div class="tab" data-filter="goahead" onclick="setFilter('goahead')">Go Ahead <span class="tab-count" id="cnt-goahead">0</span></div>
-  <div class="tab" data-filter="spares" onclick="setFilter('spares')">Awaiting Spares <span class="tab-count" id="cnt-spares">0</span></div>
-  <div class="tab" data-filter="quote" onclick="setFilter('quote')">Quote First <span class="tab-count" id="cnt-quote">0</span></div>
-  <div class="tab" data-filter="onhold" onclick="setFilter('onhold')">On Hold <span class="tab-count" id="cnt-onhold">0</span></div>
-  <div class="tab" data-filter="collect" onclick="setFilter('collect')">Will Collect <span class="tab-count" id="cnt-collect">0</span></div>
+<div id="setupBanner">
+  <b>Offline mode</b> — data is stored on this device only.
+  <a onclick="resetFirebase()">Connect to Firebase</a> to enable global sync across all staff.
 </div>
 
-<!-- MAIN -->
+<!-- TABS -->
+<div class="tab-bar">
+  <div class="tab active" data-filter="all"     onclick="setFilter('all')">All <span class="tab-count" id="cnt-all">0</span></div>
+  <div class="tab"        data-filter="new"     onclick="setFilter('new')">New <span class="tab-count" id="cnt-new">0</span></div>
+  <div class="tab"        data-filter="goahead" onclick="setFilter('goahead')">Go Ahead <span class="tab-count" id="cnt-goahead">0</span></div>
+  <div class="tab"        data-filter="spares"  onclick="setFilter('spares')">Awaiting Spares <span class="tab-count" id="cnt-spares">0</span></div>
+  <div class="tab"        data-filter="quote"   onclick="setFilter('quote')">Quote First <span class="tab-count" id="cnt-quote">0</span></div>
+  <div class="tab"        data-filter="onhold"  onclick="setFilter('onhold')">On Hold <span class="tab-count" id="cnt-onhold">0</span></div>
+  <div class="tab"        data-filter="collect" onclick="setFilter('collect')">Will Collect <span class="tab-count" id="cnt-collect">0</span></div>
+</div>
+
 <main>
   <div class="search-bar">
     <span class="search-icon">🔍</span>
     <input type="text" id="searchInput" placeholder="Search by name, job # or contact…" oninput="renderList()"/>
   </div>
-  <div id="jobList"></div>
+  <div id="jobList"><div class="loading"><div class="spinner"></div>Loading…</div></div>
 </main>
 
-<!-- FAB -->
 <button class="fab" onclick="openNewModal()" title="Add Job Card">＋</button>
 
-<!-- ═══ ADD/EDIT MODAL ═══════════════════════ -->
+<!-- ADD/EDIT MODAL -->
 <div class="overlay" id="mainOverlay" onclick="handleOverlayClick(event)">
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 id="modalTitle">📋 New Job Card</h2>
-
     <div class="form-row">
-      <div class="form-group">
-        <label>Job Card #</label>
-        <input type="text" id="f-jobnum" placeholder="e.g. JC-2401"/>
-      </div>
-      <div class="form-group">
-        <label>Date</label>
-        <input type="date" id="f-date"/>
-      </div>
+      <div class="form-group"><label>Job Card #</label><input type="text" id="f-jobnum" placeholder="e.g. JC-2401"/></div>
+      <div class="form-group"><label>Date</label><input type="date" id="f-date"/></div>
     </div>
-
-    <div class="form-group">
-      <label>Client Name</label>
-      <input type="text" id="f-client" placeholder="Full name"/>
-    </div>
-
-    <div class="form-group">
-      <label>Contact Number</label>
-      <input type="tel" id="f-contact" placeholder="e.g. 082 000 0000"/>
-    </div>
-
-    <div class="form-group">
-      <label>Appliance / Description</label>
-      <input type="text" id="f-appliance" placeholder="e.g. Defy gas stove – burner fault"/>
-    </div>
-
-    <div class="form-group">
-      <label>Notes</label>
-      <textarea id="f-notes" rows="2" placeholder="Optional technician notes…" style="resize:vertical;"></textarea>
-    </div>
-
+    <div class="form-group"><label>Client Name</label><input type="text" id="f-client" placeholder="Full name"/></div>
+    <div class="form-group"><label>Contact Number</label><input type="tel" id="f-contact" placeholder="e.g. 082 000 0000"/></div>
+    <div class="form-group"><label>Appliance / Description</label><input type="text" id="f-appliance" placeholder="e.g. Defy gas stove – burner fault"/></div>
+    <div class="form-group"><label>Notes</label><textarea id="f-notes" rows="2" style="resize:vertical;"></textarea></div>
     <div class="form-group">
       <label>Status</label>
       <div class="status-grid" id="statusPicker">
-        <div class="status-opt selected" data-val="new" onclick="pickStatus('new')"><span class="status-dot" style="background:var(--orange)"></span>New</div>
-        <div class="status-opt" data-val="goahead" onclick="pickStatus('goahead')"><span class="status-dot" style="background:var(--green)"></span>Go Ahead</div>
-        <div class="status-opt" data-val="spares" onclick="pickStatus('spares')"><span class="status-dot" style="background:var(--yellow)"></span>Awaiting Spares</div>
-        <div class="status-opt" data-val="quote" onclick="pickStatus('quote')"><span class="status-dot" style="background:var(--blue)"></span>Quote First</div>
-        <div class="status-opt" data-val="onhold" onclick="pickStatus('onhold')"><span class="status-dot" style="background:var(--purple)"></span>On Hold</div>
-        <div class="status-opt" data-val="collect" onclick="pickStatus('collect')"><span class="status-dot" style="background:var(--teal)"></span>Will Collect</div>
+        <div class="status-opt selected" data-val="new"     onclick="pickStatus('new')">    <span class="status-dot" style="background:#f97316"></span>New</div>
+        <div class="status-opt"          data-val="goahead" onclick="pickStatus('goahead')"><span class="status-dot" style="background:#22c55e"></span>Go Ahead</div>
+        <div class="status-opt"          data-val="spares"  onclick="pickStatus('spares')"> <span class="status-dot" style="background:#eab308"></span>Awaiting Spares</div>
+        <div class="status-opt"          data-val="quote"   onclick="pickStatus('quote')">  <span class="status-dot" style="background:#3b82f6"></span>Quote First</div>
+        <div class="status-opt"          data-val="onhold"  onclick="pickStatus('onhold')"> <span class="status-dot" style="background:#a855f7"></span>On Hold</div>
+        <div class="status-opt"          data-val="collect" onclick="pickStatus('collect')"><span class="status-dot" style="background:#14b8a6"></span>Will Collect</div>
       </div>
     </div>
-
     <div class="form-group">
       <label>Job Card Photo</label>
-      <div class="photo-zone" id="photoZone">
+      <div class="photo-zone">
         <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="handlePhoto(event)"/>
         <div class="photo-zone-icon">📷</div>
         <p><strong>Tap to capture</strong> or choose from gallery</p>
         <img id="photoPreview" class="photo-preview" alt="Preview"/>
       </div>
     </div>
-
-    <button class="btn btn-primary" onclick="saveJob()">Save Job Card</button>
+    <button class="btn btn-primary" id="saveBtn" onclick="saveJob()">Save Job Card</button>
     <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
   </div>
 </div>
 
-<!-- ═══ STATUS QUICK-CHANGE MODAL ═══════════ -->
+<!-- STATUS QUICK-CHANGE -->
 <div class="status-modal-overlay" id="statusOverlay" onclick="closeStatusModal()">
   <div class="status-modal" onclick="event.stopPropagation()">
     <h3>Update Status</h3>
@@ -343,244 +313,262 @@
   </div>
 </div>
 
-<!-- ═══ LIGHTBOX ═══════════════════════════ -->
+<!-- LIGHTBOX -->
 <div id="lightbox" style="display:none;" onclick="closeLightbox()">
   <span class="lightbox-close">✕</span>
   <img id="lightboxImg" alt="Job card photo"/>
 </div>
 
 <script>
-// ── DATA ────────────────────────────────────
-const STORE = 'bg_jobs_v2';
-let jobs = [];
-let currentFilter = 'all';
-let editingId = null;
-let selectedStatus = 'new';
-let statusTargetId = null;
+const FB_KEY    = 'bg_fb_config';
+const LOCAL_KEY = 'bg_jobs_v2';
 
-const STATUS_META = {
-  new:     { label: 'New',             color: 'var(--orange)', cls: 's-new',    dot: '#f97316' },
-  goahead: { label: 'Go Ahead',        color: 'var(--green)',  cls: 's-goahead',dot: '#22c55e' },
-  spares:  { label: 'Awaiting Spares', color: 'var(--yellow)', cls: 's-spares', dot: '#eab308' },
-  quote:   { label: 'Quote First',     color: 'var(--blue)',   cls: 's-quote',  dot: '#3b82f6' },
-  onhold:  { label: 'On Hold',         color: 'var(--purple)', cls: 's-onhold', dot: '#a855f7' },
-  collect: { label: 'Will Collect',    color: 'var(--teal)',   cls: 's-collect',dot: '#14b8a6' },
+let db = null, storage = null, useFirebase = false;
+let jobs = [], currentFilter = 'all', editingId = null;
+let selectedStatus = 'new', statusTargetId = null, pendingPhoto = null;
+
+const SM = {
+  new:     { label:'New',             dot:'#f97316', cls:'s-new'    },
+  goahead: { label:'Go Ahead',        dot:'#22c55e', cls:'s-goahead'},
+  spares:  { label:'Awaiting Spares', dot:'#eab308', cls:'s-spares' },
+  quote:   { label:'Quote First',     dot:'#3b82f6', cls:'s-quote'  },
+  onhold:  { label:'On Hold',         dot:'#a855f7', cls:'s-onhold' },
+  collect: { label:'Will Collect',    dot:'#14b8a6', cls:'s-collect'},
 };
 
-function load()  { try { jobs = JSON.parse(localStorage.getItem(STORE)) || []; } catch(e){ jobs=[]; } }
-function save()  { localStorage.setItem(STORE, JSON.stringify(jobs)); }
-function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+/* ── Firebase Setup ── */
+function connectFirebase() {
+  const raw = document.getElementById('fbConfigInput').value.trim();
+  let cfg;
+  try {
+    const s = raw.replace(/^[^{]*/, '').replace(/([{,]\s*)(\w+)\s*:/g,'$1"$2":').replace(/'/g,'"');
+    cfg = JSON.parse(s);
+    if (!cfg.apiKey || !cfg.projectId) throw 0;
+  } catch(e) { document.getElementById('fbErr').style.display='block'; return; }
+  localStorage.setItem(FB_KEY, JSON.stringify(cfg));
+  initFB(cfg);
+}
 
-// ── RENDER ──────────────────────────────────
+function useDemoMode() {
+  localStorage.setItem(FB_KEY, 'offline');
+  document.getElementById('firebaseSetupOverlay').style.display = 'none';
+  document.getElementById('setupBanner').style.display = 'block';
+  loadLocal();
+}
+
+function resetFirebase() { localStorage.removeItem(FB_KEY); location.reload(); }
+
+function initFB(cfg) {
+  try {
+    const app = firebase.initializeApp(cfg);
+    db = firebase.firestore(app);
+    storage = firebase.storage(app);
+    useFirebase = true;
+    document.getElementById('firebaseSetupOverlay').style.display = 'none';
+    syncDot('live');
+    db.collection('jobcards').orderBy('created','desc').onSnapshot(snap => {
+      jobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      syncDot('live'); renderList();
+    }, () => syncDot('error'));
+  } catch(e) { alert('Firebase error: ' + e.message); }
+}
+
+function syncDot(s) {
+  const d = document.getElementById('syncDot');
+  d.className = 'sync-dot ' + s;
+  d.title = s === 'live' ? '🟢 Live — syncing across all devices' : s === 'error' ? '🔴 Sync error' : '⚫ Offline';
+}
+
+/* ── Local mode ── */
+function loadLocal() {
+  try { jobs = JSON.parse(localStorage.getItem(LOCAL_KEY)) || []; } catch(e) { jobs = []; }
+  renderList();
+}
+function saveLocal() { localStorage.setItem(LOCAL_KEY, JSON.stringify(jobs)); }
+
+/* ── Render ── */
 function renderList() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  const filtered = jobs.filter(j => {
-    const matchFilter = currentFilter === 'all' || j.status === currentFilter;
-    const matchSearch = !q || j.client.toLowerCase().includes(q) || j.jobnum.toLowerCase().includes(q) || (j.contact||'').includes(q);
-    return matchFilter && matchSearch;
-  }).sort((a,b) => b.created - a.created);
-
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  const list = jobs.filter(j => {
+    const mf = currentFilter === 'all' || j.status === currentFilter;
+    const ms = !q || (j.client||'').toLowerCase().includes(q) || (j.jobnum||'').toLowerCase().includes(q) || (j.contact||'').includes(q);
+    return mf && ms;
+  });
   updateCounts();
-
   const el = document.getElementById('jobList');
-  if (!filtered.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>No job cards yet</h3><p>Tap <b style="color:var(--orange)">＋</b> to add one</p></div>`;
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>No job cards found</h3><p>Tap <b style="color:var(--orange)">＋</b> to add one</p></div>`;
     return;
   }
-
-  el.innerHTML = filtered.map(j => {
-    const m = STATUS_META[j.status] || STATUS_META.new;
-    const thumbHtml = j.photo
-      ? `<img class="job-thumb" src="${j.photo}" alt="Job card" onclick="openLightbox('${j.id}')"/>`
+  el.innerHTML = list.map(j => {
+    const m = SM[j.status]||SM.new;
+    const th = j.photoUrl
+      ? `<img class="job-thumb" src="${j.photoUrl}" loading="lazy" onclick="openLightbox('${j.id}')" alt=""/>`
       : `<div class="job-thumb placeholder">📋</div>`;
-    return `
-    <div class="job-card" id="card-${j.id}">
-      <div class="job-card-top">
-        ${thumbHtml}
+    return `<div class="job-card">
+      <div class="job-card-top">${th}
         <div class="job-info">
-          <div class="job-header">
-            <span class="job-num">${esc(j.jobnum)}</span>
-            <span class="job-date">${j.date || ''}</span>
-          </div>
+          <div class="job-header"><span class="job-num">${esc(j.jobnum)}</span><span class="job-date">${j.date||''}</span></div>
           <div class="job-client">${esc(j.client)}</div>
           <div class="job-contact">📞 <a href="tel:${esc(j.contact)}">${esc(j.contact)}</a></div>
-          ${j.appliance ? `<div style="font-size:12px;color:var(--muted);margin-top:3px;">🔧 ${esc(j.appliance)}</div>` : ''}
+          ${j.appliance?`<div style="font-size:12px;color:var(--muted);margin-top:3px;">🔧 ${esc(j.appliance)}</div>`:''}
         </div>
       </div>
       <div class="job-bottom">
-        <span class="status-pill ${m.cls}" onclick="openStatusModal('${j.id}')" style="cursor:pointer;" title="Tap to change">
-          <span style="width:8px;height:8px;background:${m.dot};border-radius:50%;display:inline-block;"></span>
-          ${m.label}
+        <span class="status-pill ${m.cls}" onclick="openStatusModal('${j.id}')" style="cursor:pointer;">
+          <span style="width:8px;height:8px;background:${m.dot};border-radius:50%;display:inline-block;"></span>${m.label}
         </span>
         <div class="job-actions">
-          <button class="icon-btn" onclick="openEdit('${j.id}')" title="Edit">✏️</button>
-          <button class="icon-btn danger" onclick="deleteJob('${j.id}')" title="Delete">🗑</button>
+          <button class="icon-btn" onclick="openEdit('${j.id}')">✏️</button>
+          <button class="icon-btn danger" onclick="deleteJob('${j.id}')">🗑</button>
         </div>
       </div>
-      ${j.notes ? `<div style="padding:0 14px 12px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:8px;">${esc(j.notes)}</div>` : ''}
+      ${j.notes?`<div style="padding:0 14px 10px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:8px;">${esc(j.notes)}</div>`:''}
     </div>`;
   }).join('');
 }
 
 function updateCounts() {
-  const counts = { all: jobs.length, new:0, goahead:0, spares:0, quote:0, onhold:0, collect:0 };
-  jobs.forEach(j => { if (counts[j.status] !== undefined) counts[j.status]++; });
-  Object.keys(counts).forEach(k => {
-    const el = document.getElementById('cnt-' + k);
-    if (el) el.textContent = counts[k];
-  });
+  const c = { all: jobs.length, new:0, goahead:0, spares:0, quote:0, onhold:0, collect:0 };
+  jobs.forEach(j => { if(c[j.status]!==undefined) c[j.status]++; });
+  Object.keys(c).forEach(k => { const e=document.getElementById('cnt-'+k); if(e) e.textContent=c[k]; });
   document.getElementById('totalCount').textContent = jobs.length;
 }
 
 function setFilter(f) {
   currentFilter = f;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.filter === f));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.filter===f));
   renderList();
 }
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ── ADD / EDIT MODAL ─────────────────────────
+/* ── Modal ── */
 function openNewModal() {
-  editingId = null;
-  selectedStatus = 'new';
-  document.getElementById('modalTitle').textContent = '📋 New Job Card';
-  document.getElementById('f-jobnum').value = '';
-  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
-  document.getElementById('f-client').value = '';
-  document.getElementById('f-contact').value = '';
-  document.getElementById('f-appliance').value = '';
-  document.getElementById('f-notes').value = '';
-  document.getElementById('photoPreview').style.display = 'none';
-  document.getElementById('photoInput').value = '';
+  editingId=null; pendingPhoto=null; selectedStatus='new';
+  document.getElementById('modalTitle').textContent='📋 New Job Card';
+  ['f-jobnum','f-client','f-contact','f-appliance','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('photoPreview').style.display='none';
+  document.getElementById('photoInput').value='';
   pickStatus('new');
   document.getElementById('mainOverlay').classList.add('open');
 }
 
 function openEdit(id) {
-  const j = jobs.find(x => x.id === id);
-  if (!j) return;
-  editingId = id;
-  selectedStatus = j.status || 'new';
-  document.getElementById('modalTitle').textContent = '✏️ Edit Job Card';
-  document.getElementById('f-jobnum').value = j.jobnum;
-  document.getElementById('f-date').value = j.date || '';
-  document.getElementById('f-client').value = j.client;
-  document.getElementById('f-contact').value = j.contact || '';
-  document.getElementById('f-appliance').value = j.appliance || '';
-  document.getElementById('f-notes').value = j.notes || '';
-  const prev = document.getElementById('photoPreview');
-  if (j.photo) { prev.src = j.photo; prev.style.display = 'block'; } else { prev.style.display = 'none'; }
-  document.getElementById('photoInput').value = '';
+  const j=jobs.find(x=>x.id===id); if(!j) return;
+  editingId=id; pendingPhoto=null; selectedStatus=j.status||'new';
+  document.getElementById('modalTitle').textContent='✏️ Edit Job Card';
+  document.getElementById('f-jobnum').value=j.jobnum||'';
+  document.getElementById('f-date').value=j.date||'';
+  document.getElementById('f-client').value=j.client||'';
+  document.getElementById('f-contact').value=j.contact||'';
+  document.getElementById('f-appliance').value=j.appliance||'';
+  document.getElementById('f-notes').value=j.notes||'';
+  const prev=document.getElementById('photoPreview');
+  if(j.photoUrl){prev.src=j.photoUrl;prev.style.display='block';}else{prev.style.display='none';}
+  document.getElementById('photoInput').value='';
   pickStatus(selectedStatus);
   document.getElementById('mainOverlay').classList.add('open');
 }
 
 function closeModal() { document.getElementById('mainOverlay').classList.remove('open'); }
-function handleOverlayClick(e) { if (e.target === document.getElementById('mainOverlay')) closeModal(); }
+function handleOverlayClick(e) { if(e.target===document.getElementById('mainOverlay')) closeModal(); }
+function pickStatus(v) { selectedStatus=v; document.querySelectorAll('#statusPicker .status-opt').forEach(o=>o.classList.toggle('selected',o.dataset.val===v)); }
 
-function pickStatus(val) {
-  selectedStatus = val;
-  document.querySelectorAll('#statusPicker .status-opt').forEach(o => {
-    o.classList.toggle('selected', o.dataset.val === val);
-  });
-}
-
-function saveJob() {
-  const jobnum   = document.getElementById('f-jobnum').value.trim();
-  const client   = document.getElementById('f-client').value.trim();
-  const contact  = document.getElementById('f-contact').value.trim();
-  const date     = document.getElementById('f-date').value;
-  const appliance= document.getElementById('f-appliance').value.trim();
-  const notes    = document.getElementById('f-notes').value.trim();
-  const prev     = document.getElementById('photoPreview');
-
-  if (!jobnum || !client) { alert('Job Card # and Client Name are required.'); return; }
-
-  const photo = prev.style.display !== 'none' ? prev.src : null;
-
-  if (editingId) {
-    const j = jobs.find(x => x.id === editingId);
-    if (j) { Object.assign(j, { jobnum, client, contact, date, appliance, notes, status: selectedStatus, photo }); }
-  } else {
-    jobs.push({ id: genId(), jobnum, client, contact, date, appliance, notes, status: selectedStatus, photo, created: Date.now() });
-  }
-
-  save(); closeModal(); renderList();
-}
-
-// ── PHOTO ────────────────────────────────────
-function handlePhoto(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    // Compress image
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const MAX = 1200;
-      let w = img.width, h = img.height;
-      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-      if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-      const prev = document.getElementById('photoPreview');
-      prev.src = dataUrl; prev.style.display = 'block';
+async function saveJob() {
+  const jobnum=document.getElementById('f-jobnum').value.trim();
+  const client=document.getElementById('f-client').value.trim();
+  if(!jobnum||!client){alert('Job Card # and Client Name are required.');return;}
+  const btn=document.getElementById('saveBtn'); btn.disabled=true; btn.textContent='Saving…';
+  try {
+    let photoUrl = null;
+    if (!pendingPhoto && editingId) { const x=jobs.find(j=>j.id===editingId); photoUrl=x?(x.photoUrl||null):null; }
+    if (pendingPhoto) {
+      photoUrl = useFirebase && storage ? await uploadPhoto(pendingPhoto, jobnum) : pendingPhoto;
+    }
+    const data = {
+      jobnum, client,
+      contact: document.getElementById('f-contact').value.trim(),
+      date: document.getElementById('f-date').value,
+      appliance: document.getElementById('f-appliance').value.trim(),
+      notes: document.getElementById('f-notes').value.trim(),
+      status: selectedStatus, photoUrl: photoUrl||null, created: Date.now()
     };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
+    if (useFirebase && db) {
+      editingId ? await db.collection('jobcards').doc(editingId).update(data) : await db.collection('jobcards').add(data);
+    } else {
+      if(editingId){const i=jobs.findIndex(x=>x.id===editingId);if(i!==-1)jobs[i]={...jobs[i],...data};}
+      else jobs.unshift({id:genId(),...data});
+      saveLocal(); renderList();
+    }
+    closeModal();
+  } catch(e){alert('Save failed: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Save Job Card';}
 }
 
-// ── LIGHTBOX ─────────────────────────────────
-function openLightbox(id) {
-  const j = jobs.find(x => x.id === id);
-  if (!j || !j.photo) return;
-  const lb = document.getElementById('lightbox');
-  document.getElementById('lightboxImg').src = j.photo;
-  lb.style.display = 'flex';
-  lb.className = 'lightbox';
+/* ── Photo ── */
+function handlePhoto(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader(); r.onload=ev=>{
+    const img=new Image(); img.onload=()=>{
+      const c=document.createElement('canvas'); const MAX=1400;
+      let w=img.width,h=img.height;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;} if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+      c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+      pendingPhoto=c.toDataURL('image/jpeg',.78);
+      const p=document.getElementById('photoPreview'); p.src=pendingPhoto; p.style.display='block';
+    }; img.src=ev.target.result;
+  }; r.readAsDataURL(file);
 }
-function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
 
-// ── STATUS QUICK-CHANGE ──────────────────────
-function openStatusModal(id) {
-  statusTargetId = id;
-  const j = jobs.find(x => x.id === id);
-  const current = j ? j.status : 'new';
-  const picker = document.getElementById('quickStatusPicker');
-  picker.innerHTML = Object.entries(STATUS_META).map(([val, m]) => `
-    <div class="status-opt ${val === current ? 'selected' : ''}" onclick="applyStatus('${val}')">
-      <span class="status-dot" style="background:${m.dot}"></span>${m.label}
-    </div>
-  `).join('');
+async function uploadPhoto(dataUrl, jobnum) {
+  const blob=await(await fetch(dataUrl)).blob();
+  const ref=storage.ref(`jobcards/${Date.now()}_${jobnum.replace(/\W/g,'_')}.jpg`);
+  await ref.put(blob,{contentType:'image/jpeg'});
+  return await ref.getDownloadURL();
+}
+
+/* ── Lightbox ── */
+function openLightbox(id){const j=jobs.find(x=>x.id===id);if(!j||!j.photoUrl)return;document.getElementById('lightboxImg').src=j.photoUrl;document.getElementById('lightbox').style.display='flex';}
+function closeLightbox(){document.getElementById('lightbox').style.display='none';}
+
+/* ── Status Modal ── */
+function openStatusModal(id){
+  statusTargetId=id;
+  const j=jobs.find(x=>x.id===id); const cur=j?j.status:'new';
+  document.getElementById('quickStatusPicker').innerHTML=Object.entries(SM).map(([v,m])=>
+    `<div class="status-opt ${v===cur?'selected':''}" onclick="applyStatus('${v}')"><span class="status-dot" style="background:${m.dot}"></span>${m.label}</div>`
+  ).join('');
   document.getElementById('statusOverlay').classList.add('open');
 }
-function closeStatusModal() { document.getElementById('statusOverlay').classList.remove('open'); statusTargetId = null; }
-function applyStatus(val) {
-  if (!statusTargetId) return;
-  const j = jobs.find(x => x.id === statusTargetId);
-  if (j) { j.status = val; save(); renderList(); }
+function closeStatusModal(){document.getElementById('statusOverlay').classList.remove('open');statusTargetId=null;}
+async function applyStatus(v){
+  if(!statusTargetId)return;
+  if(useFirebase&&db){await db.collection('jobcards').doc(statusTargetId).update({status:v});}
+  else{const j=jobs.find(x=>x.id===statusTargetId);if(j){j.status=v;saveLocal();renderList();}}
   closeStatusModal();
 }
 
-// ── DELETE ───────────────────────────────────
-function deleteJob(id) {
-  if (!confirm('Delete this job card?')) return;
-  jobs = jobs.filter(x => x.id !== id);
-  save(); renderList();
+/* ── Delete ── */
+async function deleteJob(id){
+  if(!confirm('Delete this job card?'))return;
+  if(useFirebase&&db){await db.collection('jobcards').doc(id).delete();}
+  else{jobs=jobs.filter(x=>x.id!==id);saveLocal();renderList();}
 }
 
-// ── INIT ─────────────────────────────────────
-load();
-renderList();
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
-// PWA Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
-}
+/* ── Boot ── */
+(function(){
+  const s=localStorage.getItem(FB_KEY);
+  if(!s) return;
+  if(s==='offline'){useDemoMode();return;}
+  try{const cfg=JSON.parse(s);document.getElementById('firebaseSetupOverlay').style.display='none';initFB(cfg);}
+  catch(e){localStorage.removeItem(FB_KEY);}
+})();
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body>
 </html>
