@@ -11,16 +11,14 @@
 <title>Brackenfell Gas – Job Cards</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<!-- Firebase Realtime Database (no Firestore needed) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <style>
 :root {
   --navy:    #1a2f6b;
   --navy2:   #162860;
-  --flame1:  #f97316;
-  --flame2:  #f59e0b;
-  --flameB:  #3b82f6;
   --bg:      #f0f2f7;
   --surface: #ffffff;
   --border:  #d1d8e8;
@@ -34,238 +32,205 @@
   --muted:   #64748b;
   --radius:  10px;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Open Sans', sans-serif; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Open Sans',sans-serif;}
 
-/* ── HEADER ──────────────────────────────── */
-header {
-  position: sticky; top: 0; z-index: 100;
-  background: var(--navy);
-  padding: 0 16px;
-  display: flex; align-items: center; justify-content: space-between;
-  height: 66px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.25);
-}
-.logo { display: flex; align-items: center; gap: 10px; }
-.logo-flame { flex-shrink: 0; }
-.logo-wordmark { display: flex; flex-direction: column; justify-content: center; }
-.logo-name {
-  font-family: 'Raleway', sans-serif; font-weight: 800;
-  font-size: 22px; letter-spacing: -0.01em; line-height: 1;
-  color: #fff;
-}
-.logo-name .gas { color: #f59e0b; }
-.logo-tagline { font-family: 'Open Sans', sans-serif; font-size: 9px; color: rgba(255,255,255,.55); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
-.logo-tagline b { color: rgba(255,255,255,.75); font-weight: 600; }
-.header-right { display: flex; align-items: center; gap: 8px; }
-.stat-badge { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 4px 12px; font-family: 'Raleway', sans-serif; font-size: 13px; color: rgba(255,255,255,.7); }
-.stat-badge b { color: #f59e0b; font-weight: 700; }
-.sync-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.3); flex-shrink: 0; transition: background .4s; }
-.sync-dot.live  { background: #4ade80; box-shadow: 0 0 7px #4ade80; }
-.sync-dot.error { background: #f87171; }
+/* HEADER */
+header{position:sticky;top:0;z-index:100;background:var(--navy);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:66px;box-shadow:0 2px 12px rgba(0,0,0,.25);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-wordmark{display:flex;flex-direction:column;justify-content:center;}
+.logo-name{font-family:'Raleway',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.01em;line-height:1;color:#fff;}
+.logo-name .gas{color:#f59e0b;}
+.logo-tagline{font-family:'Open Sans',sans-serif;font-size:9px;color:rgba(255,255,255,.5);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+.logo-tagline b{color:rgba(255,255,255,.72);font-weight:600;}
+.header-right{display:flex;align-items:center;gap:8px;}
+.stat-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-family:'Raleway',sans-serif;font-size:13px;color:rgba(255,255,255,.7);}
+.stat-badge b{color:#f59e0b;font-weight:700;}
+.sync-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.3);flex-shrink:0;transition:background .4s;}
+.sync-dot.live{background:#4ade80;box-shadow:0 0 7px #4ade80;}
+.sync-dot.error{background:#f87171;}
 
-/* ── SETUP BANNER ────────────────────────── */
-#setupBanner { background: #eff6ff; border-bottom: 1px solid #bfdbfe; padding: 10px 16px; font-size: 13px; color: #1e40af; display: none; }
-#setupBanner a { color: #2563eb; text-decoration: underline; cursor: pointer; }
+/* BANNER */
+#setupBanner{background:#eff6ff;border-bottom:1px solid #bfdbfe;padding:10px 16px;font-size:13px;color:#1e40af;display:none;}
+#setupBanner a{color:#2563eb;text-decoration:underline;cursor:pointer;}
+#connectedBanner{background:#f0fdf4;border-bottom:1px solid #bbf7d0;padding:8px 16px;font-size:13px;color:#15803d;display:none;align-items:center;gap:8px;}
 
-/* ── TABS ────────────────────────────────── */
-.tab-bar { display: flex; background: var(--surface); border-bottom: 2px solid var(--border); overflow-x: auto; scrollbar-width: none; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
-.tab-bar::-webkit-scrollbar { display: none; }
-.tab { flex: 0 0 auto; padding: 11px 16px; font-family: 'Raleway', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; transition: all .2s; margin-bottom: -2px; }
-.tab:hover { color: var(--navy); }
-.tab.active { color: var(--navy); border-bottom-color: var(--navy); }
-.tab-count { background: var(--border); color: var(--text); border-radius: 10px; padding: 1px 7px; font-size: 11px; margin-left: 4px; }
-.tab.active .tab-count { background: var(--navy); color: #fff; }
+/* TABS */
+.tab-bar{display:flex;background:var(--surface);border-bottom:2px solid var(--border);overflow-x:auto;scrollbar-width:none;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.tab-bar::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;padding:11px 16px;font-family:'Raleway',sans-serif;font-weight:600;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;margin-bottom:-2px;}
+.tab:hover{color:var(--navy);}
+.tab.active{color:var(--navy);border-bottom-color:var(--navy);}
+.tab-count{background:var(--border);color:var(--text);border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;}
+.tab.active .tab-count{background:var(--navy);color:#fff;}
 
-/* ── MAIN ────────────────────────────────── */
-main { padding: 16px; max-width: 720px; margin: 0 auto; }
+main{padding:16px;max-width:720px;margin:0 auto;}
 
-/* ── FAB ─────────────────────────────────── */
-.fab { position: fixed; bottom: 24px; right: 20px; z-index: 200; width: 60px; height: 60px; border-radius: 50%; background: var(--navy); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 20px rgba(26,47,107,.4); transition: transform .2s, box-shadow .2s; color: #fff; }
-.fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(26,47,107,.6); }
-.fab:active { transform: scale(.95); }
+/* FAB */
+.fab{position:fixed;bottom:24px;right:20px;z-index:200;width:60px;height:60px;border-radius:50%;background:var(--navy);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(26,47,107,.4);transition:transform .2s,box-shadow .2s;color:#fff;}
+.fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(26,47,107,.6);}
+.fab:active{transform:scale(.95);}
 
-/* ── SEARCH ──────────────────────────────── */
-.search-bar { position: relative; margin-bottom: 14px; }
-.search-bar input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Open Sans', sans-serif; font-size: 14px; padding: 10px 16px 10px 40px; outline: none; transition: border-color .2s; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-.search-bar input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,47,107,.12); }
-.search-bar input::placeholder { color: var(--muted); }
-.search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 16px; pointer-events: none; }
+/* SEARCH */
+.search-bar{position:relative;margin-bottom:14px;}
+.search-bar input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Open Sans',sans-serif;font-size:14px;padding:10px 16px 10px 40px;outline:none;transition:border-color .2s,box-shadow .2s;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.search-bar input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,47,107,.1);}
+.search-bar input::placeholder{color:var(--muted);}
+.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;pointer-events:none;}
 
-/* ── JOB CARD ────────────────────────────── */
-.job-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; transition: box-shadow .2s, border-color .2s; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
-.job-card:hover { box-shadow: 0 4px 16px rgba(26,47,107,.12); border-color: #a0b0d8; }
-.job-card-top { display: flex; gap: 12px; padding: 14px; }
-.job-thumb { width: 76px; height: 76px; border-radius: 8px; object-fit: cover; background: var(--bg); border: 1px solid var(--border); flex-shrink: 0; cursor: pointer; }
-.job-thumb.placeholder { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 28px; }
-.job-info { flex: 1; min-width: 0; }
-.job-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
-.job-num { font-family: 'Raleway', sans-serif; font-weight: 800; font-size: 17px; color: var(--navy); }
-.job-date { font-size: 11px; color: var(--muted); white-space: nowrap; }
-.job-client { font-weight: 600; font-size: 15px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.job-contact { font-size: 13px; color: var(--muted); }
-.job-contact a { color: var(--navy); text-decoration: none; font-weight: 600; }
-.job-bottom { padding: 0 14px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.status-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 20px; padding: 5px 13px; font-family: 'Raleway', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; border: 1.5px solid transparent; }
-.job-actions { display: flex; gap: 6px; }
-.icon-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; cursor: pointer; color: var(--muted); font-size: 15px; transition: all .15s; }
-.icon-btn:hover { color: var(--navy); border-color: var(--navy); background: #e8ecf7; }
-.icon-btn.danger:hover { color: var(--red); border-color: var(--red); background: #fef2f2; }
-.s-spares  { background: #fefce8; color: #854d0e; border-color: #fde68a; }
-.s-quote   { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-.s-goahead { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
-.s-onhold  { background: #faf5ff; color: #6d28d9; border-color: #ddd6fe; }
-.s-collect { background: #f0fdfa; color: #0f766e; border-color: #99f6e4; }
-.s-new     { background: #eff6ff; color: var(--navy); border-color: #bfdbfe; }
+/* JOB CARD */
+.job-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;transition:box-shadow .2s,border-color .2s;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+.job-card:hover{box-shadow:0 4px 16px rgba(26,47,107,.12);border-color:#a0b0d8;}
+.job-card-top{display:flex;gap:12px;padding:14px;}
+.job-thumb{width:76px;height:76px;border-radius:8px;object-fit:cover;background:var(--bg);border:1px solid var(--border);flex-shrink:0;cursor:pointer;}
+.job-thumb.placeholder{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:28px;}
+.job-info{flex:1;min-width:0;}
+.job-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
+.job-num{font-family:'Raleway',sans-serif;font-weight:800;font-size:17px;color:var(--navy);}
+.job-date{font-size:11px;color:var(--muted);white-space:nowrap;}
+.job-client{font-weight:600;font-size:15px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.job-contact{font-size:13px;color:var(--muted);}
+.job-contact a{color:var(--navy);text-decoration:none;font-weight:600;}
+.job-bottom{padding:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.status-pill{display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:5px 13px;font-family:'Raleway',sans-serif;font-weight:700;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;border:1.5px solid transparent;}
+.job-actions{display:flex;gap:6px;}
+.icon-btn{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--muted);font-size:15px;transition:all .15s;}
+.icon-btn:hover{color:var(--navy);border-color:var(--navy);background:#e8ecf7;}
+.icon-btn.danger:hover{color:var(--red);border-color:var(--red);background:#fef2f2;}
+.s-spares {background:#fefce8;color:#854d0e;border-color:#fde68a;}
+.s-quote  {background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;}
+.s-goahead{background:#f0fdf4;color:#15803d;border-color:#bbf7d0;}
+.s-onhold {background:#faf5ff;color:#6d28d9;border-color:#ddd6fe;}
+.s-collect{background:#f0fdfa;color:#0f766e;border-color:#99f6e4;}
+.s-new    {background:#eff6ff;color:var(--navy);border-color:#bfdbfe;}
 
-/* ── EMPTY ───────────────────────────────── */
-.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-.empty-icon { font-size: 52px; margin-bottom: 12px; }
-.empty h3 { font-family: 'Raleway', sans-serif; font-size: 22px; color: var(--text); margin-bottom: 6px; }
-.loading { text-align: center; padding: 48px; color: var(--muted); font-family: 'Raleway', sans-serif; font-size: 16px; }
-.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 14px; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-icon{font-size:52px;margin-bottom:12px;}
+.empty h3{font-family:'Raleway',sans-serif;font-size:22px;color:var(--text);margin-bottom:6px;}
+.loading{text-align:center;padding:48px;color:var(--muted);font-family:'Raleway',sans-serif;font-size:16px;}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-/* ── MODAL ───────────────────────────────── */
-.overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
-.overlay.open { opacity: 1; pointer-events: all; }
-.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px 20px 0 0; width: 100%; max-width: 720px; max-height: 95vh; overflow-y: auto; transform: translateY(40px); transition: transform .3s cubic-bezier(.22,1,.36,1); padding: 24px 20px 40px; }
-.overlay.open .modal { transform: translateY(0); }
-.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
-.modal h2 { font-family: 'Raleway', sans-serif; font-weight: 800; font-size: 22px; margin-bottom: 18px; color: var(--navy); }
-.form-group { margin-bottom: 14px; }
-.form-group label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-.input-wrap { position: relative; display: flex; align-items: center; }
-.input-prefix { position: absolute; left: 12px; font-family: 'Raleway', sans-serif; font-weight: 700; font-size: 15px; color: var(--navy); pointer-events: none; letter-spacing: .02em; }
-.input-prefix + input { padding-left: 46px !important; }
-.form-group input, .form-group textarea {
-  width: 100%; background: #f8fafc; border: 1.5px solid var(--border);
-  border-radius: var(--radius); color: var(--text); font-family: 'Open Sans', sans-serif;
-  font-size: 15px; padding: 10px 14px; outline: none; transition: border-color .2s, box-shadow .2s;
-  -webkit-appearance: none;
-}
-.form-group input:focus, .form-group textarea:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,47,107,.1); background: #fff; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* MODAL */
+.overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:720px;max-height:95vh;overflow-y:auto;transform:translateY(40px);transition:transform .3s cubic-bezier(.22,1,.36,1);padding:24px 20px 40px;}
+.overlay.open .modal{transform:translateY(0);}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;}
+.modal h2{font-family:'Raleway',sans-serif;font-weight:800;font-size:22px;margin-bottom:18px;color:var(--navy);}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.input-wrap{position:relative;display:flex;align-items:center;}
+.input-prefix{position:absolute;left:12px;font-family:'Raleway',sans-serif;font-weight:700;font-size:15px;color:var(--navy);pointer-events:none;letter-spacing:.02em;}
+.input-prefix+input{padding-left:46px!important;}
+.form-group input,.form-group textarea{width:100%;background:#f8fafc;border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Open Sans',sans-serif;font-size:15px;padding:10px 14px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,47,107,.1);background:#fff;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
-/* ── PHOTO ZONE ──────────────────────────── */
-.photo-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 20px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; position: relative; background: #f8fafc; }
-.photo-zone:hover { border-color: var(--navy); background: #eef1fb; }
-.photo-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-.photo-zone-icon { font-size: 32px; margin-bottom: 6px; }
-.photo-zone p { color: var(--muted); font-size: 13px; }
-.photo-zone p strong { color: var(--navy); }
-.photo-preview { width: 100%; max-height: 280px; object-fit: cover; border-radius: var(--radius); display: none; margin-top: 12px; border: 1px solid var(--border); }
+/* PHOTO */
+.photo-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative;background:#f8fafc;}
+.photo-zone:hover{border-color:var(--navy);background:#eef1fb;}
+.photo-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.photo-zone-icon{font-size:32px;margin-bottom:6px;}
+.photo-zone p{color:var(--muted);font-size:13px;}
+.photo-zone p strong{color:var(--navy);}
+.photo-preview{width:100%;max-height:280px;object-fit:cover;border-radius:var(--radius);display:none;margin-top:12px;border:1px solid var(--border);}
+.ocr-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;padding:10px;border:1.5px solid var(--navy);border-radius:var(--radius);background:#eff3fc;color:var(--navy);font-family:'Raleway',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;letter-spacing:.03em;}
+.ocr-btn:hover{background:var(--navy);color:#fff;}
+.ocr-btn:disabled{opacity:.5;cursor:not-allowed;}
+.ocr-result-box{border-radius:var(--radius);padding:12px 14px;margin-top:10px;font-size:13px;display:none;}
+.ocr-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+.ocr-err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;}
 
-/* ── OCR BUTTON ──────────────────────────── */
-.ocr-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px; padding: 10px; border: 1.5px solid var(--navy); border-radius: var(--radius); background: #eff3fc; color: var(--navy); font-family: 'Raleway', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all .2s; letter-spacing: .03em; }
-.ocr-btn:hover { background: var(--navy); color: #fff; }
-.ocr-btn:disabled { opacity: .5; cursor: not-allowed; }
-.ocr-result-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius); padding: 12px 14px; margin-top: 10px; font-size: 13px; color: #166534; display: none; }
-.ocr-result-box b { color: #14532d; }
+/* STATUS */
+.status-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.status-opt{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:var(--radius);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;font-family:'Raleway',sans-serif;font-weight:700;font-size:13px;color:var(--muted);background:#f8fafc;}
+.status-opt:hover{border-color:var(--navy);color:var(--navy);background:#eef1fb;}
+.status-opt.selected{border-color:var(--navy);background:#eff3fc;color:var(--navy);}
+.status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.btn{width:100%;padding:13px;border:none;border-radius:var(--radius);font-family:'Raleway',sans-serif;font-weight:800;font-size:16px;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;margin-top:6px;transition:all .2s;}
+.btn-primary{background:var(--navy);color:#fff;}
+.btn-primary:hover{background:var(--navy2);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-ghost{background:var(--bg);color:var(--muted);border:1.5px solid var(--border);margin-top:8px;}
+.btn-ghost:hover{border-color:var(--navy);color:var(--navy);}
 
-/* ── STATUS PICKER ───────────────────────── */
-.status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.status-opt { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius); border: 1.5px solid var(--border); cursor: pointer; transition: all .15s; font-family: 'Raleway', sans-serif; font-weight: 700; font-size: 13px; color: var(--muted); background: #f8fafc; }
-.status-opt:hover { border-color: var(--navy); color: var(--navy); background: #eef1fb; }
-.status-opt.selected { border-color: var(--navy); background: #eff3fc; color: var(--navy); }
-.status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
+.lightbox img{max-width:95vw;max-height:92vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.8);}
+.lightbox-close{position:absolute;top:16px;right:18px;font-size:28px;color:#fff;cursor:pointer;}
 
-/* ── BUTTONS ─────────────────────────────── */
-.btn { width: 100%; padding: 13px; border: none; border-radius: var(--radius); font-family: 'Raleway', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; margin-top: 6px; transition: all .2s; }
-.btn-primary { background: var(--navy); color: #fff; }
-.btn-primary:hover { background: var(--navy2); }
-.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
-.btn-ghost { background: var(--bg); color: var(--muted); border: 1.5px solid var(--border); margin-top: 8px; }
-.btn-ghost:hover { border-color: var(--navy); color: var(--navy); }
+/* STATUS MODAL */
+.status-modal-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;padding:20px;}
+.status-modal-overlay.open{opacity:1;pointer-events:all;}
+.status-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.15);}
+.status-modal h3{font-family:'Raleway',sans-serif;font-weight:800;font-size:18px;margin-bottom:14px;color:var(--navy);}
 
-/* ── LIGHTBOX ────────────────────────────── */
-.lightbox { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.92); display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
-.lightbox img { max-width: 95vw; max-height: 92vh; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,.8); }
-.lightbox-close { position: absolute; top: 16px; right: 18px; font-size: 28px; color: #fff; cursor: pointer; }
+/* SETUP MODAL */
+#firebaseSetupOverlay{position:fixed;inset:0;z-index:600;background:rgba(10,20,60,.96);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
+.setup-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 24px;width:100%;max-width:520px;box-shadow:0 12px 48px rgba(0,0,0,.3);}
+.setup-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.setup-logo .sname{font-family:'Raleway',sans-serif;font-weight:800;font-size:22px;color:var(--navy);}
+.setup-logo .sname .gas{color:#d97706;}
+.setup-tagline{font-size:11px;color:var(--muted);margin-bottom:18px;letter-spacing:.04em;}
+.setup-box p{color:var(--muted);font-size:14px;margin-bottom:14px;line-height:1.65;}
+.setup-section{background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;}
+.setup-section h4{font-family:'Raleway',sans-serif;font-weight:700;font-size:13px;color:var(--navy);margin-bottom:10px;letter-spacing:.03em;}
+.setup-section label{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.setup-section input{width:100%;background:#fff;border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'Open Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none;transition:border-color .2s;}
+.setup-section input:focus{border-color:var(--navy);}
+.setup-hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5;}
+.setup-hint a{color:var(--blue);}
+.setup-err{color:var(--red);font-size:13px;margin-top:8px;display:none;}
+.divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--muted);font-size:12px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.api-notice{background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius);padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:14px;line-height:1.6;}
+.api-notice a{color:#b45309;font-weight:600;}
 
-/* ── STATUS MODAL ────────────────────────── */
-.status-modal-overlay { position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; padding: 20px; }
-.status-modal-overlay.open { opacity: 1; pointer-events: all; }
-.status-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; width: 100%; max-width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,.15); }
-.status-modal h3 { font-family: 'Raleway', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 14px; color: var(--navy); }
-
-/* ── FIREBASE SETUP ──────────────────────── */
-#firebaseSetupOverlay { position: fixed; inset: 0; z-index: 600; background: rgba(10,20,60,.96); display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
-.setup-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; width: 100%; max-width: 500px; box-shadow: 0 12px 48px rgba(0,0,0,.3); }
-.setup-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-.setup-logo .name { font-family: 'Raleway', sans-serif; font-weight: 800; font-size: 22px; color: var(--navy); }
-.setup-logo .name .gas { color: #d97706; }
-.setup-box p { color: var(--muted); font-size: 14px; margin-bottom: 16px; line-height: 1.65; }
-.setup-steps { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px 14px 28px; margin-bottom: 16px; }
-.setup-steps li { color: var(--muted); font-size: 13px; line-height: 2.2; }
-.setup-steps li a { color: var(--blue); }
-.setup-steps li b { color: var(--text); }
-.setup-steps li code { background: rgba(26,47,107,.08); border-radius: 4px; padding: 1px 5px; font-size: 12px; color: var(--navy); }
-.setup-box textarea { width: 100%; background: #f8fafc; border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: monospace; font-size: 12px; padding: 12px; outline: none; resize: vertical; min-height: 120px; transition: border-color .2s; }
-.setup-box textarea:focus { border-color: var(--navy); }
-.setup-err { color: var(--red); font-size: 13px; margin-top: 8px; display: none; }
-.divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--muted); font-size: 12px; }
-.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-/* ── API KEY NOTICE ──────────────────────── */
-.api-notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: #92400e; margin-bottom: 14px; line-height: 1.6; }
-.api-notice a { color: #b45309; font-weight: 600; }
-
-@media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } .status-grid { grid-template-columns: 1fr; } }
+@media(max-width:420px){.form-row{grid-template-columns:1fr;}.status-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 
-<!-- ═══ FIREBASE SETUP ══════════════════════════ -->
+<!-- ═══ SETUP MODAL ═══════════════════════════ -->
 <div id="firebaseSetupOverlay">
   <div class="setup-box">
     <div class="setup-logo">
-      <!-- Brand flame SVG -->
-      <svg width="32" height="40" viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="sg1" x1="20" y1="50" x2="20" y2="0" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#1d4ed8"/>
-            <stop offset="40%" stop-color="#3b82f6"/>
-            <stop offset="70%" stop-color="#f97316"/>
-            <stop offset="100%" stop-color="#fbbf24"/>
-          </linearGradient>
-          <linearGradient id="sg2" x1="20" y1="46" x2="20" y2="10" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#1e40af"/>
-            <stop offset="45%" stop-color="#60a5fa"/>
-            <stop offset="75%" stop-color="#fb923c"/>
-            <stop offset="100%" stop-color="#fde68a"/>
-          </linearGradient>
-          <linearGradient id="sg3" x1="20" y1="44" x2="20" y2="22" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#dbeafe"/>
-            <stop offset="100%" stop-color="#fffbeb"/>
-          </linearGradient>
-        </defs>
-        <path d="M20 2 C20 2 32 12 32 26 C32 36 27 45 20 48 C13 45 8 36 8 26 C8 12 20 2 20 2Z" fill="url(#sg1)"/>
-        <path d="M20 9 C20 9 29 18 29 28 C29 35 25.5 42 20 45 C14.5 42 11 35 11 28 C11 18 20 9 20 9Z" fill="url(#sg2)"/>
-        <path d="M20 21 C20 21 25 26 25 31.5 C25 36 23 40 20 42 C17 40 15 36 15 31.5 C15 26 20 21 20 21Z" fill="url(#sg3)" opacity="0.9"/>
-        <ellipse cx="20" cy="32" rx="3" ry="5" fill="white" opacity="0.65"/>
-      </svg>
-      <div class="name">Brackenfell<span class="gas">Gas</span></div>
+      <svg width="30" height="38" viewBox="0 0 40 50" fill="none"><defs><linearGradient id="sg1" x1="20" y1="50" x2="20" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#1e3a8a"/><stop offset="35%" stop-color="#2563eb"/><stop offset="65%" stop-color="#f97316"/><stop offset="100%" stop-color="#fbbf24"/></linearGradient><linearGradient id="sg2" x1="20" y1="46" x2="20" y2="10" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#1d4ed8"/><stop offset="40%" stop-color="#60a5fa"/><stop offset="72%" stop-color="#fb923c"/><stop offset="100%" stop-color="#fde68a"/></linearGradient><linearGradient id="sg3" x1="20" y1="44" x2="20" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#bfdbfe"/><stop offset="100%" stop-color="#fef9c3"/></linearGradient></defs><path d="M20 2 C20 2 32 12 32 26 C32 36 27 45 20 48 C13 45 8 36 8 26 C8 12 20 2 20 2Z" fill="url(#sg1)"/><path d="M20 9 C20 9 29 18 29 28 C29 35 25.5 42 20 45 C14.5 42 11 35 11 28 C11 18 20 9 20 9Z" fill="url(#sg2)"/><path d="M20 21 C20 21 25 26 25 31.5 C25 36 23 40 20 42 C17 40 15 36 15 31.5 C15 26 20 21 20 21Z" fill="url(#sg3)" opacity="0.9"/><ellipse cx="20" cy="32" rx="3" ry="5" fill="white" opacity="0.65"/></svg>
+      <div class="sname">Brackenfell<span class="gas">Gas</span></div>
     </div>
-    <p>To sync job cards across all staff phones and PCs in real-time, connect a free <b style="color:var(--text)">Firebase</b> project.</p>
-    <ol class="setup-steps">
-      <li>Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → Add project</li>
-      <li>Click <b>⟨/⟩ Web</b> → register app → copy <code>firebaseConfig</code></li>
-      <li><b>Firestore Database</b> → Create database → Start in <b>test mode</b></li>
-      <li><b>Storage</b> → Get started → Start in <b>test mode</b></li>
-      <li>Paste your config below</li>
-    </ol>
-    <label style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Firebase Config</label>
-    <textarea id="fbConfigInput" placeholder='{
-  apiKey: "AIzaSy...",
-  authDomain: "your-app.firebaseapp.com",
-  projectId: "your-app",
-  storageBucket: "your-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123:web:abc123"
-}'></textarea>
-    <div class="setup-err" id="fbErr">⚠ Invalid config — paste the full firebaseConfig object.</div>
-    <button class="btn btn-primary" style="margin-top:14px;" onclick="connectFirebase()">🔗 Connect &amp; Sync</button>
+    <div class="setup-tagline">Job Card Manager — Cloud Setup</div>
+
+    <div class="setup-section">
+      <h4>🔥 Firebase Project Config</h4>
+      <p style="margin-bottom:12px;">Your project <b style="color:var(--navy)">brackenfell-gas</b> is ready. Paste your Web App config below.<br><span style="font-size:12px;">Firebase Console → Project Settings → Your apps → ⟨/⟩ Web → SDK config</span></p>
+      <label>API Key</label>
+      <input type="text" id="s-apiKey" placeholder="AIzaSy…"/>
+      <label style="margin-top:8px;">Auth Domain</label>
+      <input type="text" id="s-authDomain" value="brackenfell-gas.firebaseapp.com"/>
+      <label style="margin-top:8px;">Database URL</label>
+      <input type="text" id="s-dbUrl" value="https://brackenfell-gas-default-rtdb.firebaseio.com"/>
+      <label style="margin-top:8px;">Storage Bucket</label>
+      <input type="text" id="s-bucket" value="brackenfell-gas.appspot.com"/>
+      <label style="margin-top:8px;">App ID</label>
+      <input type="text" id="s-appId" placeholder="1:123456:web:abc…"/>
+      <div class="setup-hint">Find these at <a href="https://console.firebase.google.com/project/brackenfell-gas/settings/general" target="_blank">Firebase Console → Project Settings</a></div>
+      <div class="setup-err" id="fbErr">⚠ Please enter at least your API Key and App ID.</div>
+    </div>
+
+    <div class="setup-section">
+      <h4>📋 Realtime Database Rules</h4>
+      <p style="margin-bottom:0;font-size:13px;">In your Firebase Console → <b>Realtime Database → Rules</b>, set:</p>
+      <pre style="background:#1e293b;color:#7dd3fc;border-radius:8px;padding:12px;font-size:12px;margin-top:8px;overflow-x:auto;">{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}</pre>
+      <div class="setup-hint">This allows all staff to read/write. You can add authentication later.</div>
+    </div>
+
+    <button class="btn btn-primary" onclick="connectFirebase()">🔗 Connect &amp; Start Syncing</button>
     <div class="divider">or</div>
     <button class="btn btn-ghost" onclick="useDemoMode()" style="margin-top:0;">Use Offline Mode (this device only)</button>
   </div>
@@ -274,32 +239,7 @@ main { padding: 16px; max-width: 720px; margin: 0 auto; }
 <!-- HEADER -->
 <header>
   <div class="logo">
-    <!-- Brand flame: blue base → orange tip like real logo -->
-    <svg class="logo-flame" width="34" height="42" viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="hg1" x1="20" y1="50" x2="20" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#1e3a8a"/>
-          <stop offset="35%" stop-color="#2563eb"/>
-          <stop offset="65%" stop-color="#f97316"/>
-          <stop offset="100%" stop-color="#fbbf24"/>
-        </linearGradient>
-        <linearGradient id="hg2" x1="20" y1="46" x2="20" y2="10" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#1d4ed8"/>
-          <stop offset="40%" stop-color="#60a5fa"/>
-          <stop offset="72%" stop-color="#fb923c"/>
-          <stop offset="100%" stop-color="#fde68a"/>
-        </linearGradient>
-        <linearGradient id="hg3" x1="20" y1="44" x2="20" y2="22" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#bfdbfe"/>
-          <stop offset="100%" stop-color="#fef9c3"/>
-        </linearGradient>
-        <filter id="hglow"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <path d="M20 2 C20 2 32 12 32 26 C32 36 27 45 20 48 C13 45 8 36 8 26 C8 12 20 2 20 2Z" fill="url(#hg1)" filter="url(#hglow)"/>
-      <path d="M20 9 C20 9 29 18 29 28 C29 35 25.5 42 20 45 C14.5 42 11 35 11 28 C11 18 20 9 20 9Z" fill="url(#hg2)"/>
-      <path d="M20 21 C20 21 25 26 25 31.5 C25 36 23 40 20 42 C17 40 15 36 15 31.5 C15 26 20 21 20 21Z" fill="url(#hg3)" opacity="0.85"/>
-      <ellipse cx="20" cy="33" rx="2.8" ry="4.5" fill="white" opacity="0.6"/>
-    </svg>
+    <svg width="34" height="42" viewBox="0 0 40 50" fill="none"><defs><linearGradient id="hg1" x1="20" y1="50" x2="20" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#1e3a8a"/><stop offset="35%" stop-color="#2563eb"/><stop offset="65%" stop-color="#f97316"/><stop offset="100%" stop-color="#fbbf24"/></linearGradient><linearGradient id="hg2" x1="20" y1="46" x2="20" y2="10" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#1d4ed8"/><stop offset="40%" stop-color="#60a5fa"/><stop offset="72%" stop-color="#fb923c"/><stop offset="100%" stop-color="#fde68a"/></linearGradient><linearGradient id="hg3" x1="20" y1="44" x2="20" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#bfdbfe"/><stop offset="100%" stop-color="#fef9c3"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path d="M20 2 C20 2 32 12 32 26 C32 36 27 45 20 48 C13 45 8 36 8 26 C8 12 20 2 20 2Z" fill="url(#hg1)" filter="url(#glow)"/><path d="M20 9 C20 9 29 18 29 28 C29 35 25.5 42 20 45 C14.5 42 11 35 11 28 C11 18 20 9 20 9Z" fill="url(#hg2)"/><path d="M20 21 C20 21 25 26 25 31.5 C25 36 23 40 20 42 C17 40 15 36 15 31.5 C15 26 20 21 20 21Z" fill="url(#hg3)" opacity="0.85"/><ellipse cx="20" cy="33" rx="2.8" ry="4.5" fill="white" opacity="0.6"/></svg>
     <div class="logo-wordmark">
       <div class="logo-name">Brackenfell<span class="gas">Gas</span></div>
       <div class="logo-tagline">Your household gas supplier since 1988 · <b>BUILT on TRUST</b></div>
@@ -312,7 +252,11 @@ main { padding: 16px; max-width: 720px; margin: 0 auto; }
 </header>
 
 <div id="setupBanner">
-  <b>Offline mode</b> — data stored on this device only. <a onclick="resetFirebase()">Connect Firebase</a> for global sync.
+  <b>Offline mode</b> — data stored on this device only. <a onclick="resetConfig()">Connect Firebase</a> for global sync.
+</div>
+<div id="connectedBanner">
+  <span>🟢</span><span id="connectedMsg">Connected to Firebase Realtime Database — syncing across all devices</span>
+  <span style="margin-left:auto;cursor:pointer;color:#15803d;font-size:12px;" onclick="resetConfig()">Reconnect</span>
 </div>
 
 <!-- TABS -->
@@ -336,33 +280,34 @@ main { padding: 16px; max-width: 720px; margin: 0 auto; }
 
 <button class="fab" onclick="openNewModal()" title="Add Job Card">＋</button>
 
-<!-- ═══ ADD / EDIT MODAL ════════════════════════ -->
+<!-- ═══ ADD / EDIT MODAL ═══════════════════ -->
 <div class="overlay" id="mainOverlay" onclick="handleOverlayClick(event)">
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 id="modalTitle">📋 New Job Card</h2>
 
-    <!-- PHOTO + OCR section (top) -->
+    <!-- PHOTO + OCR -->
     <div class="form-group">
       <label>Job Card Photo</label>
-      <div class="photo-zone" id="photoZone">
+      <div class="photo-zone">
         <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="handlePhoto(event)"/>
         <div class="photo-zone-icon">📷</div>
         <p><strong>Capture or upload</strong> handwritten job card</p>
         <img id="photoPreview" class="photo-preview" alt="Preview"/>
       </div>
       <button class="ocr-btn" id="ocrBtn" onclick="runOCR()" disabled>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         ✨ Read Handwriting &amp; Autofill
       </button>
       <div class="ocr-result-box" id="ocrResultBox"></div>
     </div>
 
-    <!-- Claude API key (stored locally, never sent to server) -->
+    <!-- Claude API key -->
     <div class="api-notice" id="apiNotice">
-      ✨ <b>Handwriting recognition</b> uses the Claude AI API.
-      Enter your <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic API key</a> once to enable it:
-      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-…" style="margin-top:6px;font-size:12px;padding:7px 10px;border-radius:6px;border:1px solid #fde68a;background:#fffbeb;color:#78350f;width:100%;outline:none;" oninput="saveApiKey()"/>
+      ✨ <b>Handwriting recognition</b> uses the Claude AI API — enter your
+      <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic API key</a> once:
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-…"
+        style="margin-top:6px;font-size:12px;padding:7px 10px;border-radius:6px;border:1px solid #fde68a;background:#fffbeb;color:#78350f;width:100%;outline:none;"
+        oninput="saveApiKey()"/>
     </div>
 
     <div class="form-row">
@@ -410,17 +355,24 @@ main { padding: 16px; max-width: 720px; margin: 0 auto; }
 <!-- LIGHTBOX -->
 <div id="lightbox" style="display:none;" onclick="closeLightbox()">
   <span class="lightbox-close">✕</span>
-  <img id="lightboxImg" alt="Job card photo"/>
+  <img id="lightboxImg" alt=""/>
 </div>
 
 <script>
-const FB_KEY    = 'bg_fb_config';
-const LOCAL_KEY = 'bg_jobs_v2';
+// ═══════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════
+const CFG_KEY       = 'bg_rtdb_config_v2';
+const LOCAL_KEY     = 'bg_jobs_v2';
 const API_KEY_STORE = 'bg_claude_api_key';
 
-let db=null, storage=null, useFirebase=false;
-let jobs=[], currentFilter='all', editingId=null;
-let selectedStatus='new', statusTargetId=null, pendingPhoto=null;
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let rtdb = null, fbStorage = null, useFirebase = false;
+let jobs = [], jobsMap = {};
+let currentFilter = 'all', editingId = null;
+let selectedStatus = 'new', statusTargetId = null, pendingPhoto = null;
 
 const SM = {
   new:     { label:'New',             dot:'#2563eb', cls:'s-new'    },
@@ -431,41 +383,99 @@ const SM = {
   collect: { label:'Will Collect',    dot:'#0f766e', cls:'s-collect'},
 };
 
-/* ── API Key ── */
-function saveApiKey(){
-  const k=document.getElementById('apiKeyInput').value.trim();
-  if(k) localStorage.setItem(API_KEY_STORE,k);
-}
-function getApiKey(){ return localStorage.getItem(API_KEY_STORE)||''; }
+// ═══════════════════════════════════════════════════
+//  API KEY
+// ═══════════════════════════════════════════════════
+function saveApiKey(){const k=document.getElementById('apiKeyInput').value.trim();if(k){localStorage.setItem(API_KEY_STORE,k);document.getElementById('apiNotice').style.display='none';}}
+function getApiKey(){return localStorage.getItem(API_KEY_STORE)||'';}
 
-/* ── Firebase ── */
+// ═══════════════════════════════════════════════════
+//  FIREBASE SETUP
+// ═══════════════════════════════════════════════════
 function connectFirebase(){
-  const raw=document.getElementById('fbConfigInput').value.trim(); let cfg;
-  try{
-    const s=raw.replace(/^[^{]*/,'').replace(/([{,]\s*)(\w+)\s*:/g,'$1"$2":').replace(/'/g,'"');
-    cfg=JSON.parse(s); if(!cfg.apiKey||!cfg.projectId) throw 0;
-  }catch(e){document.getElementById('fbErr').style.display='block';return;}
-  localStorage.setItem(FB_KEY,JSON.stringify(cfg)); initFB(cfg);
-}
-function useDemoMode(){localStorage.setItem(FB_KEY,'offline');document.getElementById('firebaseSetupOverlay').style.display='none';document.getElementById('setupBanner').style.display='block';loadLocal();}
-function resetFirebase(){localStorage.removeItem(FB_KEY);location.reload();}
-function initFB(cfg){
-  try{
-    const app=firebase.initializeApp(cfg);
-    db=firebase.firestore(app); storage=firebase.storage(app); useFirebase=true;
-    document.getElementById('firebaseSetupOverlay').style.display='none';
-    syncDot('live');
-    db.collection('jobcards').orderBy('created','desc').onSnapshot(snap=>{
-      jobs=snap.docs.map(d=>({id:d.id,...d.data()})); syncDot('live'); renderList();
-    },()=>syncDot('error'));
-  }catch(e){alert('Firebase error: '+e.message);}
-}
-function syncDot(s){const d=document.getElementById('syncDot');d.className='sync-dot '+s;d.title=s==='live'?'🟢 Live — syncing all devices':s==='error'?'🔴 Sync error':'⚫ Offline';}
+  const apiKey     = document.getElementById('s-apiKey').value.trim();
+  const authDomain = document.getElementById('s-authDomain').value.trim();
+  const dbUrl      = document.getElementById('s-dbUrl').value.trim();
+  const storageBucket = document.getElementById('s-bucket').value.trim();
+  const appId      = document.getElementById('s-appId').value.trim();
 
-function loadLocal(){try{jobs=JSON.parse(localStorage.getItem(LOCAL_KEY))||[];}catch(e){jobs=[];}renderList();}
-function saveLocal(){localStorage.setItem(LOCAL_KEY,JSON.stringify(jobs));}
+  if(!apiKey || !appId){
+    document.getElementById('fbErr').style.display='block';
+    return;
+  }
 
-/* ── Render ── */
+  const cfg = { apiKey, authDomain, databaseURL: dbUrl, storageBucket, appId,
+    projectId: 'brackenfell-gas', messagingSenderId: '' };
+
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+  initFirebase(cfg);
+}
+
+function initFirebase(cfg){
+  try{
+    // Avoid duplicate app init
+    let app;
+    try{ app = firebase.app(); } catch(e){ app = firebase.initializeApp(cfg); }
+
+    rtdb = firebase.database(app);
+    useFirebase = true;
+
+    // Try Storage (optional — photos fall back to base64 if not enabled)
+    try{ fbStorage = firebase.storage(app); } catch(e){ fbStorage = null; }
+
+    document.getElementById('firebaseSetupOverlay').style.display = 'none';
+    document.getElementById('connectedBanner').style.display = 'flex';
+    setSyncDot('live');
+
+    // Real-time listener on /jobcards
+    rtdb.ref('jobcards').on('value', snap => {
+      jobsMap = snap.val() || {};
+      jobs = Object.entries(jobsMap)
+        .map(([id, data]) => ({id, ...data}))
+        .sort((a,b) => (b.created||0) - (a.created||0));
+      setSyncDot('live');
+      renderList();
+    }, err => {
+      console.error(err);
+      setSyncDot('error');
+    });
+
+  }catch(e){
+    alert('Firebase connection failed:\n' + e.message + '\n\nCheck your API key and App ID.');
+  }
+}
+
+function useDemoMode(){
+  localStorage.setItem(CFG_KEY,'offline');
+  document.getElementById('firebaseSetupOverlay').style.display='none';
+  document.getElementById('setupBanner').style.display='block';
+  loadLocal();
+}
+
+function resetConfig(){
+  if(!confirm('Disconnect and reconfigure Firebase?')) return;
+  localStorage.removeItem(CFG_KEY);
+  location.reload();
+}
+
+function setSyncDot(s){
+  const d=document.getElementById('syncDot');
+  d.className='sync-dot '+s;
+  d.title = s==='live' ? '🟢 Live — syncing all devices' : s==='error' ? '🔴 Sync error — check console' : '⚫ Offline mode';
+}
+
+// ═══════════════════════════════════════════════════
+//  LOCAL MODE
+// ═══════════════════════════════════════════════════
+function loadLocal(){
+  try{ jobs=JSON.parse(localStorage.getItem(LOCAL_KEY))||[]; }catch(e){ jobs=[]; }
+  renderList();
+}
+function saveLocal(){ localStorage.setItem(LOCAL_KEY, JSON.stringify(jobs)); }
+
+// ═══════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════
 function renderList(){
   const q=(document.getElementById('searchInput').value||'').toLowerCase();
   const list=jobs.filter(j=>{
@@ -475,10 +485,15 @@ function renderList(){
   });
   updateCounts();
   const el=document.getElementById('jobList');
-  if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><h3>No job cards found</h3><p>Tap <b style="color:var(--navy)">＋</b> to add one</p></div>`;return;}
+  if(!list.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><h3>No job cards found</h3><p>Tap <b style="color:var(--navy)">＋</b> to add one</p></div>`;
+    return;
+  }
   el.innerHTML=list.map(j=>{
     const m=SM[j.status]||SM.new;
-    const th=j.photoUrl?`<img class="job-thumb" src="${j.photoUrl}" loading="lazy" onclick="openLightbox('${j.id}')" alt=""/>`:`<div class="job-thumb placeholder">📋</div>`;
+    const th=j.photoUrl
+      ?`<img class="job-thumb" src="${j.photoUrl}" loading="lazy" onclick="openLightbox('${j.id}')" alt=""/>`
+      :`<div class="job-thumb placeholder">📋</div>`;
     return `<div class="job-card">
       <div class="job-card-top">${th}
         <div class="job-info">
@@ -508,34 +523,37 @@ function updateCounts(){
   Object.keys(c).forEach(k=>{const e=document.getElementById('cnt-'+k);if(e)e.textContent=c[k];});
   document.getElementById('totalCount').textContent=jobs.length;
 }
-function setFilter(f){currentFilter=f;document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.filter===f));renderList();}
+
+function setFilter(f){
+  currentFilter=f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.filter===f));
+  renderList();
+}
+
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-/* ── Modal ── */
+// ═══════════════════════════════════════════════════
+//  ADD / EDIT MODAL
+// ═══════════════════════════════════════════════════
 function openNewModal(){
-  editingId=null;pendingPhoto=null;selectedStatus='new';
+  editingId=null; pendingPhoto=null; selectedStatus='new';
   document.getElementById('modalTitle').textContent='📋 New Job Card';
   ['f-jobnum','f-client','f-contact','f-appliance','f-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
   document.getElementById('photoPreview').style.display='none';
   document.getElementById('photoInput').value='';
   document.getElementById('ocrBtn').disabled=true;
-  document.getElementById('ocrResultBox').style.display='none';
+  resetOcrBox();
   pickStatus('new');
-  // show/hide api key notice
-  const k=getApiKey();
-  const notice=document.getElementById('apiNotice');
-  if(k){notice.style.display='none';}else{notice.style.display='block';}
-  if(k) document.getElementById('apiKeyInput').value=k;
+  showApiNotice();
   document.getElementById('mainOverlay').classList.add('open');
 }
+
 function openEdit(id){
-  const j=jobs.find(x=>x.id===id);if(!j)return;
-  editingId=id;pendingPhoto=null;selectedStatus=j.status||'new';
+  const j=jobs.find(x=>x.id===id); if(!j) return;
+  editingId=id; pendingPhoto=null; selectedStatus=j.status||'new';
   document.getElementById('modalTitle').textContent='✏️ Edit Job Card';
-  // Strip JC- prefix if stored with it
-  const numRaw=(j.jobnum||'').replace(/^JC-/i,'');
-  document.getElementById('f-jobnum').value=numRaw;
+  document.getElementById('f-jobnum').value=(j.jobnum||'').replace(/^JC-/i,'');
   document.getElementById('f-date').value=j.date||'';
   document.getElementById('f-client').value=j.client||'';
   document.getElementById('f-contact').value=j.contact||'';
@@ -544,144 +562,151 @@ function openEdit(id){
   const prev=document.getElementById('photoPreview');
   if(j.photoUrl){prev.src=j.photoUrl;prev.style.display='block';document.getElementById('ocrBtn').disabled=false;}
   else{prev.style.display='none';document.getElementById('ocrBtn').disabled=true;}
-  document.getElementById('ocrResultBox').style.display='none';
-  const k=getApiKey();
-  document.getElementById('apiNotice').style.display=k?'none':'block';
-  if(k) document.getElementById('apiKeyInput').value=k;
+  resetOcrBox();
   document.getElementById('photoInput').value='';
   pickStatus(selectedStatus);
+  showApiNotice();
   document.getElementById('mainOverlay').classList.add('open');
 }
+
 function closeModal(){document.getElementById('mainOverlay').classList.remove('open');}
 function handleOverlayClick(e){if(e.target===document.getElementById('mainOverlay'))closeModal();}
 function pickStatus(v){selectedStatus=v;document.querySelectorAll('#statusPicker .status-opt').forEach(o=>o.classList.toggle('selected',o.dataset.val===v));}
+function showApiNotice(){const k=getApiKey();const n=document.getElementById('apiNotice');n.style.display=k?'none':'block';if(k)document.getElementById('apiKeyInput').value=k;}
+function resetOcrBox(){const b=document.getElementById('ocrResultBox');b.style.display='none';b.className='ocr-result-box';}
 
 async function saveJob(){
   const numRaw=document.getElementById('f-jobnum').value.trim();
   const client=document.getElementById('f-client').value.trim();
   if(!numRaw||!client){alert('Job Card # and Client Name are required.');return;}
-  const jobnum='JC-'+numRaw.replace(/^JC-/i,''); // Always store with prefix
-  const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Saving…';
+  const jobnum='JC-'+numRaw.replace(/^JC-/i,'');
+  const btn=document.getElementById('saveBtn'); btn.disabled=true; btn.textContent='Saving…';
   try{
     let photoUrl=null;
     if(!pendingPhoto&&editingId){const x=jobs.find(j=>j.id===editingId);photoUrl=x?(x.photoUrl||null):null;}
-    if(pendingPhoto){photoUrl=useFirebase&&storage?await uploadPhoto(pendingPhoto,jobnum):pendingPhoto;}
+    if(pendingPhoto){
+      if(fbStorage){
+        try{ photoUrl=await uploadToStorage(pendingPhoto,jobnum); }
+        catch(e){ photoUrl=pendingPhoto; } // fallback to base64 if storage fails
+      } else {
+        photoUrl=pendingPhoto; // store base64 inline in RTDB
+      }
+    }
     const data={
-      jobnum,client,
+      jobnum, client,
       contact:document.getElementById('f-contact').value.trim(),
       date:document.getElementById('f-date').value,
       appliance:document.getElementById('f-appliance').value.trim(),
       notes:document.getElementById('f-notes').value.trim(),
-      status:selectedStatus,photoUrl:photoUrl||null,created:Date.now()
+      status:selectedStatus, photoUrl:photoUrl||null, created:Date.now()
     };
-    if(useFirebase&&db){
-      editingId?await db.collection('jobcards').doc(editingId).update(data):await db.collection('jobcards').add(data);
+    if(useFirebase&&rtdb){
+      if(editingId){
+        await rtdb.ref('jobcards/'+editingId).update(data);
+      }else{
+        await rtdb.ref('jobcards').push(data);
+      }
     }else{
       if(editingId){const i=jobs.findIndex(x=>x.id===editingId);if(i!==-1)jobs[i]={...jobs[i],...data};}
       else jobs.unshift({id:genId(),...data});
-      saveLocal();renderList();
+      saveLocal(); renderList();
     }
     closeModal();
   }catch(e){alert('Save failed: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Save Job Card';}
 }
 
-/* ── Photo ── */
+// ═══════════════════════════════════════════════════
+//  PHOTO
+// ═══════════════════════════════════════════════════
 function handlePhoto(e){
-  const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();r.onload=ev=>{
-    const img=new Image();img.onload=()=>{
-      const c=document.createElement('canvas');const MAX=1400;
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader(); r.onload=ev=>{
+    const img=new Image(); img.onload=()=>{
+      const c=document.createElement('canvas'); const MAX=1400;
       let w=img.width,h=img.height;
-      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
-      c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;} if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+      c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
       pendingPhoto=c.toDataURL('image/jpeg',.82);
-      const p=document.getElementById('photoPreview');p.src=pendingPhoto;p.style.display='block';
+      const p=document.getElementById('photoPreview'); p.src=pendingPhoto; p.style.display='block';
       document.getElementById('ocrBtn').disabled=false;
-      document.getElementById('ocrResultBox').style.display='none';
-    };img.src=ev.target.result;
-  };r.readAsDataURL(file);
+      resetOcrBox();
+    }; img.src=ev.target.result;
+  }; r.readAsDataURL(file);
 }
 
-async function uploadPhoto(dataUrl,jobnum){
+async function uploadToStorage(dataUrl, jobnum){
   const blob=await(await fetch(dataUrl)).blob();
-  const ref=storage.ref(`jobcards/${Date.now()}_${jobnum.replace(/\W/g,'_')}.jpg`);
+  const ref=fbStorage.ref(`jobcards/${Date.now()}_${jobnum.replace(/\W/g,'_')}.jpg`);
   await ref.put(blob,{contentType:'image/jpeg'});
   return await ref.getDownloadURL();
 }
 
-/* ── OCR / Handwriting Recognition ── */
+// ═══════════════════════════════════════════════════
+//  OCR — HANDWRITING RECOGNITION
+// ═══════════════════════════════════════════════════
 async function runOCR(){
-  const apiKey = document.getElementById('apiKeyInput').value.trim() || getApiKey();
-  if(!apiKey){ alert('Please enter your Anthropic API key above to use handwriting recognition.'); return; }
-  localStorage.setItem(API_KEY_STORE, apiKey);
+  const apiKey=document.getElementById('apiKeyInput').value.trim()||getApiKey();
+  if(!apiKey){alert('Please enter your Anthropic API key to use handwriting recognition.');return;}
+  localStorage.setItem(API_KEY_STORE,apiKey);
   document.getElementById('apiNotice').style.display='none';
 
-  const imgSrc = pendingPhoto || document.getElementById('photoPreview').src;
-  if(!imgSrc || imgSrc===window.location.href){ alert('Please capture or upload a photo first.'); return; }
+  const imgSrc=pendingPhoto||document.getElementById('photoPreview').src;
+  if(!imgSrc||imgSrc===window.location.href){alert('Please capture or upload a photo first.');return;}
 
   const btn=document.getElementById('ocrBtn');
   btn.disabled=true; btn.textContent='🔍 Reading handwriting…';
-  const box=document.getElementById('ocrResultBox');
-  box.style.display='none';
+  resetOcrBox();
 
-  // Extract base64 from dataURL
   let base64, mediaType='image/jpeg';
   if(imgSrc.startsWith('data:')){
     const parts=imgSrc.split(',');
     mediaType=parts[0].match(/:(.*?);/)[1];
     base64=parts[1];
-  } else {
-    // Remote URL — fetch and convert
+  }else{
     try{
       const res=await fetch(imgSrc);
       const ab=await res.arrayBuffer();
       base64=btoa(String.fromCharCode(...new Uint8Array(ab)));
       mediaType=res.headers.get('content-type')||'image/jpeg';
-    }catch(e){alert('Could not load image for OCR.');btn.disabled=false;btn.innerHTML='✨ Read Handwriting &amp; Autofill';return;}
+    }catch(e){
+      showOcrResult(false,'Could not load image for processing.');
+      btn.disabled=false; btn.innerHTML='✨ Read Handwriting &amp; Autofill'; return;
+    }
   }
 
-  const prompt=`You are reading a handwritten gas appliance service job card for Brackenfell Gas.
-Extract the following fields as accurately as possible from the handwriting. Return ONLY a JSON object (no markdown, no explanation) with these exact keys:
+  const prompt=`You are reading a handwritten gas appliance service job card for Brackenfell Gas (South Africa).
+Extract as much information as possible from the handwriting. Return ONLY a valid JSON object — no markdown, no explanation:
 {
-  "jobnum": "the job card number (digits only, no prefix)",
+  "jobnum": "job card number digits only (no prefix)",
   "client": "client full name",
   "contact": "phone number",
-  "appliance": "appliance type or description of fault",
-  "notes": "any other notes or details",
-  "date": "date in YYYY-MM-DD format if visible, else empty string"
+  "appliance": "appliance type and/or fault description",
+  "notes": "any other notes, parts needed, or instructions",
+  "date": "date as YYYY-MM-DD if visible, else empty string"
 }
-If a field is not visible or illegible, use an empty string. Do not guess. Return only valid JSON.`;
+Use empty string "" for any field that is not visible or illegible. Never guess. Return only valid JSON.`;
 
   try{
-    const response = await fetch('https://api.anthropic.com/v1/messages',{
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-calls':'true'},
       body:JSON.stringify({
         model:'claude-opus-4-20250514',
-        max_tokens:600,
+        max_tokens:700,
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
           {type:'text',text:prompt}
         ]}]
       })
     });
-
-    if(!response.ok){
-      const err=await response.json();
-      throw new Error(err.error?.message||'API error '+response.status);
-    }
-
+    if(!response.ok){const err=await response.json();throw new Error(err.error?.message||'API error '+response.status);}
     const data=await response.json();
     const text=data.content.map(b=>b.type==='text'?b.text:'').join('').trim();
-
     let parsed;
-    try{
-      const clean=text.replace(/```json|```/g,'').trim();
-      parsed=JSON.parse(clean);
-    }catch(e){throw new Error('Could not parse AI response. Please fill in manually.');}
+    try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim());}
+    catch(e){throw new Error('AI returned unreadable response. Try a clearer photo.');}
 
-    // Autofill fields
     let filled=[];
     if(parsed.jobnum){document.getElementById('f-jobnum').value=parsed.jobnum.replace(/^JC-/i,'');filled.push('Job #');}
     if(parsed.client){document.getElementById('f-client').value=parsed.client;filled.push('Client');}
@@ -690,29 +715,33 @@ If a field is not visible or illegible, use an empty string. Do not guess. Retur
     if(parsed.notes){document.getElementById('f-notes').value=parsed.notes;filled.push('Notes');}
     if(parsed.date){document.getElementById('f-date').value=parsed.date;filled.push('Date');}
 
-    box.style.display='block';
-    box.innerHTML= filled.length
-      ? `✅ <b>Autofilled:</b> ${filled.join(', ')}. Please review and correct any errors before saving.`
-      : `⚠️ Handwriting was difficult to read. Please fill in fields manually.`;
-
+    showOcrResult(true, filled.length
+      ? `✅ Autofilled: <b>${filled.join(', ')}</b>. Please review and correct before saving.`
+      : `⚠️ Handwriting was too difficult to read. Please fill in manually.`);
   }catch(e){
-    box.style.display='block';
-    box.style.background='#fef2f2';box.style.borderColor='#fecaca';box.style.color='#991b1b';
-    box.innerHTML=`❌ <b>OCR failed:</b> ${e.message}`;
+    showOcrResult(false,'❌ <b>Failed:</b> '+e.message);
   }
-
-  btn.disabled=false;
-  btn.innerHTML='✨ Read Handwriting &amp; Autofill';
+  btn.disabled=false; btn.innerHTML='✨ Read Handwriting &amp; Autofill';
 }
 
-/* ── Lightbox ── */
+function showOcrResult(ok, html){
+  const b=document.getElementById('ocrResultBox');
+  b.className='ocr-result-box '+(ok?'ocr-ok':'ocr-err');
+  b.innerHTML=html; b.style.display='block';
+}
+
+// ═══════════════════════════════════════════════════
+//  LIGHTBOX
+// ═══════════════════════════════════════════════════
 function openLightbox(id){const j=jobs.find(x=>x.id===id);if(!j||!j.photoUrl)return;document.getElementById('lightboxImg').src=j.photoUrl;document.getElementById('lightbox').style.display='flex';}
 function closeLightbox(){document.getElementById('lightbox').style.display='none';}
 
-/* ── Status Modal ── */
+// ═══════════════════════════════════════════════════
+//  STATUS MODAL
+// ═══════════════════════════════════════════════════
 function openStatusModal(id){
   statusTargetId=id;
-  const j=jobs.find(x=>x.id===id);const cur=j?j.status:'new';
+  const j=jobs.find(x=>x.id===id); const cur=j?j.status:'new';
   document.getElementById('quickStatusPicker').innerHTML=Object.entries(SM).map(([v,m])=>
     `<div class="status-opt ${v===cur?'selected':''}" onclick="applyStatus('${v}')"><span class="status-dot" style="background:${m.dot}"></span>${m.label}</div>`
   ).join('');
@@ -721,34 +750,53 @@ function openStatusModal(id){
 function closeStatusModal(){document.getElementById('statusOverlay').classList.remove('open');statusTargetId=null;}
 async function applyStatus(v){
   if(!statusTargetId)return;
-  if(useFirebase&&db){await db.collection('jobcards').doc(statusTargetId).update({status:v});}
-  else{const j=jobs.find(x=>x.id===statusTargetId);if(j){j.status=v;saveLocal();renderList();}}
+  if(useFirebase&&rtdb){
+    await rtdb.ref('jobcards/'+statusTargetId+'/status').set(v);
+  }else{
+    const j=jobs.find(x=>x.id===statusTargetId);
+    if(j){j.status=v;saveLocal();renderList();}
+  }
   closeStatusModal();
 }
 
-/* ── Delete ── */
+// ═══════════════════════════════════════════════════
+//  DELETE
+// ═══════════════════════════════════════════════════
 async function deleteJob(id){
   if(!confirm('Delete this job card?'))return;
-  if(useFirebase&&db){await db.collection('jobcards').doc(id).delete();}
-  else{jobs=jobs.filter(x=>x.id!==id);saveLocal();renderList();}
+  if(useFirebase&&rtdb){
+    await rtdb.ref('jobcards/'+id).remove();
+  }else{
+    jobs=jobs.filter(x=>x.id!==id);saveLocal();renderList();
+  }
 }
 
 function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
-/* ── Boot ── */
-(function(){
-  // Restore API key
+// ═══════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════
+(function boot(){
   const k=getApiKey();
   if(k) document.getElementById('apiKeyInput').value=k;
 
-  const s=localStorage.getItem(FB_KEY);
-  if(!s)return;
-  if(s==='offline'){useDemoMode();return;}
-  try{const cfg=JSON.parse(s);document.getElementById('firebaseSetupOverlay').style.display='none';initFB(cfg);}
-  catch(e){localStorage.removeItem(FB_KEY);}
+  const saved=localStorage.getItem(CFG_KEY);
+  if(!saved) return; // show setup modal
+  if(saved==='offline'){useDemoMode();return;}
+
+  try{
+    const cfg=JSON.parse(saved);
+    document.getElementById('firebaseSetupOverlay').style.display='none';
+    // Pre-fill setup form in case they need to reconfigure
+    if(cfg.apiKey) document.getElementById('s-apiKey').value=cfg.apiKey;
+    if(cfg.appId)  document.getElementById('s-appId').value=cfg.appId;
+    initFirebase(cfg);
+  }catch(e){
+    localStorage.removeItem(CFG_KEY);
+  }
 })();
 
-if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body>
 </html>
