@@ -1,6 +1,6 @@
 {
   "name": "Brackenfell Gas – Job Cards",
-  "short_name": "BG Jobs",
+  "short_name": "BGas Jobs",
   "description": "Job card management for Brackenfell Gas appliance services",
   "start_url": "./index.html",
   "display": "standalone",
