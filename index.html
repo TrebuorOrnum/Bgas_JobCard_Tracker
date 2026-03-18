@@ -519,33 +519,92 @@ async function saveJob(){
   if(!numRaw||!client){alert('Job Card # and Client Name are required.');return;}
   const jobnum='JC-'+numRaw.replace(/^JC-/i,'');
   const btn=document.getElementById('saveBtn'); btn.disabled=true; btn.textContent='Saving…';
+
   try{
+    // Get existing photoUrl if editing and no new photo chosen
     let photoUrl=null;
-    if(!pendingPhoto&&editingId){const x=jobs.find(j=>j.id===editingId);photoUrl=x?(x.photoUrl||null):null;}
-    if(pendingPhoto){
-      if(fbStorage){
-        try{photoUrl=await uploadToStorage(pendingPhoto,jobnum);}
-        catch(e){photoUrl=pendingPhoto;} // fallback inline
-      }else{
-        photoUrl=pendingPhoto;
-      }
+    if(!pendingPhoto&&editingId){
+      const x=jobs.find(j=>j.id===editingId);
+      photoUrl=x?(x.photoUrl||null):null;
     }
+
+    // Build data WITHOUT photo first — save instantly so it never hangs
     const data={
       jobnum, client,
       contact:document.getElementById('f-contact').value.trim(),
       date:document.getElementById('f-date').value,
       appliance:document.getElementById('f-appliance').value.trim(),
       notes:document.getElementById('f-notes').value.trim(),
-      status:selectedStatus, photoUrl:photoUrl||null, created:Date.now()
+      status:selectedStatus,
+      photoUrl:photoUrl||null,
+      created:Date.now()
     };
+
+    let savedRef;
     if(editingId){
       await rtdb.ref('jobcards/'+editingId).update(data);
+      savedRef=rtdb.ref('jobcards/'+editingId);
     }else{
-      await rtdb.ref('jobcards').push(data);
+      savedRef=await rtdb.ref('jobcards').push(data);
     }
+
+    // Close modal immediately — photo uploads in background
     closeModal();
-  }catch(e){alert('Save failed: '+e.message);}
-  finally{btn.disabled=false;btn.textContent='Save Job Card';}
+
+    // Now upload photo in background if there's a new one
+    if(pendingPhoto){
+      uploadPhotoBackground(pendingPhoto, jobnum, savedRef);
+    }
+
+  }catch(e){
+    alert('Save failed: '+e.message);
+    btn.disabled=false; btn.textContent='Save Job Card';
+  }
+}
+
+// Upload photo silently after save — shows toast when done
+async function uploadPhotoBackground(dataUrl, jobnum, ref){
+  try{
+    let photoUrl=null;
+    if(fbStorage){
+      // Try Firebase Storage first
+      try{
+        photoUrl=await uploadToStorage(dataUrl,jobnum);
+      }catch(storageErr){
+        console.warn('Storage upload failed, using compressed inline:', storageErr.message);
+        // Fallback: compress heavily and store inline in RTDB
+        photoUrl=await compressToSmall(dataUrl);
+      }
+    }else{
+      // No storage configured — compress and store inline
+      photoUrl=await compressToSmall(dataUrl);
+    }
+    if(photoUrl){
+      await ref.update({photoUrl});
+    }
+  }catch(e){
+    console.error('Photo upload failed silently:', e.message);
+    // Don't alert — job card is already saved, photo just won't show
+  }
+}
+
+// Compress image to <400KB for inline RTDB storage fallback
+function compressToSmall(dataUrl){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      // Max 600px for thumbnail quality sufficient for job cards
+      const MAX=600;
+      let w=img.width,h=img.height;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL('image/jpeg',0.55));
+    };
+    img.src=dataUrl;
+  });
 }
 
 // ═══════════════════════════════════════════════════
@@ -555,11 +614,11 @@ function handlePhoto(e){
   const file=e.target.files[0]; if(!file) return;
   const r=new FileReader(); r.onload=ev=>{
     const img=new Image(); img.onload=()=>{
-      const c=document.createElement('canvas'); const MAX=1400;
+      const c=document.createElement('canvas'); const MAX=900;
       let w=img.width,h=img.height;
       if(w>MAX){h=Math.round(h*MAX/w);w=MAX;} if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
       c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
-      pendingPhoto=c.toDataURL('image/jpeg',.82);
+      pendingPhoto=c.toDataURL('image/jpeg',0.70);
       const p=document.getElementById('photoPreview');p.src=pendingPhoto;p.style.display='block';
       document.getElementById('ocrBtn').disabled=false;
       resetOcrBox();
@@ -576,43 +635,53 @@ async function uploadToStorage(dataUrl,jobnum){
 
 // ═══════════════════════════════════════════════════
 //  OCR — HANDWRITING READ & AUTOFILL
+//  Uses Claude API — works on all browsers/devices
 // ═══════════════════════════════════════════════════
 async function runOCR(){
   const imgSrc=pendingPhoto||document.getElementById('photoPreview').src;
-  if(!imgSrc||imgSrc===window.location.href){alert('Please capture or upload a photo first.');return;}
+  if(!imgSrc||imgSrc===window.location.href){
+    alert('Please capture or upload a photo first.');return;
+  }
 
   const btn=document.getElementById('ocrBtn');
   btn.disabled=true; btn.textContent='🔍 Reading handwriting…';
   resetOcrBox();
 
-  let base64,mediaType='image/jpeg';
+  // Get base64 from data URL (pendingPhoto is always a data URL)
+  let base64, mediaType='image/jpeg';
   if(imgSrc.startsWith('data:')){
-    const p=imgSrc.split(',');
-    mediaType=p[0].match(/:(.*?);/)[1];
-    base64=p[1];
+    const parts=imgSrc.split(',');
+    const mMatch=parts[0].match(/:(.*?);/);
+    mediaType=mMatch?mMatch[1]:'image/jpeg';
+    base64=parts[1];
   }else{
+    // For remote URLs (editing existing card) — fetch and convert
     try{
-      const res=await fetch(imgSrc);
-      const ab=await res.arrayBuffer();
-      base64=btoa(String.fromCharCode(...new Uint8Array(ab)));
-      mediaType=res.headers.get('content-type')||'image/jpeg';
+      const r=await fetch(imgSrc);
+      const ab=await r.arrayBuffer();
+      // Convert in chunks to avoid call stack overflow on large images
+      const bytes=new Uint8Array(ab);
+      let binary='';
+      const chunkSize=8192;
+      for(let i=0;i<bytes.length;i+=chunkSize){
+        binary+=String.fromCharCode(...bytes.subarray(i,i+chunkSize));
+      }
+      base64=btoa(binary);
+      mediaType=r.headers.get('content-type')||'image/jpeg';
     }catch(e){
-      showOcrBox(false,'Could not load the image. Try again.');
+      showOcrBox(false,'Cannot read remote image for OCR. Re-capture the photo to use handwriting recognition.');
       btn.disabled=false;btn.innerHTML='✨ Read Handwriting &amp; Autofill Fields';return;
     }
   }
 
+  // Compress base64 for OCR — doesn't need to be high-res
+  const ocrBase64=await resizeBase64ForOCR(base64,mediaType);
+
   const prompt=`You are reading a handwritten appliance service job card for Brackenfell Gas in South Africa.
-Extract all visible information from the handwriting and return ONLY a valid JSON object — no markdown, no extra text:
-{
-  "jobnum": "job number digits only, no prefix",
-  "client": "client full name",
-  "contact": "phone number",
-  "appliance": "appliance description and/or fault",
-  "notes": "any other notes, parts, instructions",
-  "date": "date as YYYY-MM-DD if visible, else empty string"
-}
-Use empty string for anything not visible or illegible. Return only valid JSON.`;
+Look carefully at ALL text in the image and extract every field you can read.
+Return ONLY a valid JSON object with no markdown fences and no extra text:
+{"jobnum":"digits only no prefix","client":"full client name","contact":"phone number","appliance":"appliance and fault description","notes":"any other notes or instructions","date":"YYYY-MM-DD if visible else empty string"}
+Use empty string for anything not visible. Return only the JSON object.`;
 
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
@@ -624,23 +693,31 @@ Use empty string for anything not visible or illegible. Return only valid JSON.`
         'anthropic-dangerous-direct-browser-calls':'true'
       },
       body:JSON.stringify({
-        model:'claude-opus-4-20250514',
-        max_tokens:700,
+        model:'claude-sonnet-4-6',
+        max_tokens:500,
         messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+          {type:'image',source:{type:'base64',media_type:mediaType,data:ocrBase64}},
           {type:'text',text:prompt}
         ]}]
       })
     });
-    if(!res.ok){const err=await res.json();throw new Error(err.error?.message||'API error '+res.status);}
+
+    if(!res.ok){
+      const errBody=await res.json().catch(()=>({error:{message:'HTTP '+res.status}}));
+      throw new Error(errBody.error?.message||'API error '+res.status);
+    }
+
     const data=await res.json();
     const raw=data.content.map(b=>b.type==='text'?b.text:'').join('').trim();
+
+    // Strip any accidental markdown fences
+    const clean=raw.replace(/^```[a-z]*\n?/,'').replace(/```$/,'').trim();
     let parsed;
-    try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}
-    catch(e){throw new Error('Could not parse AI response. Try a clearer photo.');}
+    try{parsed=JSON.parse(clean);}
+    catch(e){throw new Error('AI response was not valid JSON. Try a clearer, well-lit photo of the handwriting.');}
 
     const filled=[];
-    if(parsed.jobnum){document.getElementById('f-jobnum').value=parsed.jobnum.replace(/^JC-/i,'');filled.push('Job #');}
+    if(parsed.jobnum){document.getElementById('f-jobnum').value=String(parsed.jobnum).replace(/^JC-/i,'');filled.push('Job #');}
     if(parsed.client){document.getElementById('f-client').value=parsed.client;filled.push('Client');}
     if(parsed.contact){document.getElementById('f-contact').value=parsed.contact;filled.push('Contact');}
     if(parsed.appliance){document.getElementById('f-appliance').value=parsed.appliance;filled.push('Appliance');}
@@ -649,11 +726,38 @@ Use empty string for anything not visible or illegible. Return only valid JSON.`
 
     showOcrBox(true, filled.length
       ? `✅ Autofilled: <b>${filled.join(', ')}</b>. Review and correct if needed before saving.`
-      : `⚠️ Handwriting was difficult to read clearly. Please fill in the fields manually.`);
+      : `⚠️ Could not read handwriting clearly. Please fill in fields manually.`);
+
   }catch(e){
-    showOcrBox(false,'❌ <b>Read failed:</b> '+e.message);
+    let msg=e.message||'Unknown error';
+    if(msg.includes('fetch')||msg.includes('network')||msg.toLowerCase().includes('failed')){
+      msg='Network error — check your internet connection and try again.';
+    }
+    showOcrBox(false,'❌ <b>Read failed:</b> '+msg);
   }
-  btn.disabled=false;btn.innerHTML='✨ Read Handwriting &amp; Autofill Fields';
+
+  btn.disabled=false;
+  btn.innerHTML='✨ Read Handwriting &amp; Autofill Fields';
+}
+
+// Resize image to max 800px for OCR — reduces payload, improves speed
+function resizeBase64ForOCR(base64,mediaType){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=800;
+      let w=img.width,h=img.height;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+      const c=document.createElement('canvas');
+      c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      const dataUrl=c.toDataURL('image/jpeg',0.80);
+      resolve(dataUrl.split(',')[1]);
+    };
+    img.onerror=()=>resolve(base64); // fallback to original
+    img.src='data:'+mediaType+';base64,'+base64;
+  });
 }
 
 function showOcrBox(ok,html){
