@@ -179,10 +179,17 @@ main{padding:16px;max-width:720px;margin:0 auto;}
 #connectingScreen .cs-msg{font-family:'Raleway',sans-serif;font-size:14px;color:rgba(255,255,255,.55);letter-spacing:.04em;}
 #connectingScreen.hidden{display:none;}
 
+/* ── TOAST ───────────────────────────────── */
+#toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);z-index:900;background:#1e293b;color:#fff;font-family:'Raleway',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border-radius:24px;box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
 @media(max-width:420px){.form-row{grid-template-columns:1fr;}.status-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
+
+<!-- Toast notification -->
+<div id="toast"></div>
 
 <!-- Connecting splash -->
 <div id="connectingScreen">
@@ -314,7 +321,7 @@ const FB_CFG = {
   authDomain:        "brackenfell-gas.firebaseapp.com",
   databaseURL:       "https://brackenfell-gas-default-rtdb.firebaseio.com",
   projectId:         "brackenfell-gas",
-  storageBucket:     "brackenfell-gas.appspot.com",
+  storageBucket:     "brackenfell-gas.firebasestorage.app",
   messagingSenderId: "937736044596",
   appId:             "1:937736044596:web:85a1955b13143a0966ca61"
 };
@@ -345,7 +352,13 @@ function initFirebase(){
   try{
     const app = firebase.initializeApp(FB_CFG);
     rtdb = firebase.database(app);
-    try{ fbStorage = firebase.storage(app); }catch(e){ fbStorage = null; }
+    try{
+      fbStorage = firebase.storage(app);
+      console.log('[BG] Firebase Storage ready:', FB_CFG.storageBucket);
+    }catch(e){
+      console.warn('[BG] Firebase Storage init failed:', e.message);
+      fbStorage = null;
+    }
 
     setSyncDot('connecting');
 
@@ -564,27 +577,28 @@ async function saveJob(){
 
 // Upload photo silently after save — shows toast when done
 async function uploadPhotoBackground(dataUrl, jobnum, ref){
+  showToast('📷 Uploading photo…', 0); // 0 = stays until dismissed
   try{
     let photoUrl=null;
     if(fbStorage){
-      // Try Firebase Storage first
       try{
         photoUrl=await uploadToStorage(dataUrl,jobnum);
+        showToast('✅ Photo saved to Storage', 3000);
       }catch(storageErr){
-        console.warn('Storage upload failed, using compressed inline:', storageErr.message);
-        // Fallback: compress heavily and store inline in RTDB
+        console.warn('[BG] Storage failed, using compressed inline:', storageErr.message);
         photoUrl=await compressToSmall(dataUrl);
+        showToast('📷 Photo saved (compressed)', 3000);
       }
     }else{
-      // No storage configured — compress and store inline
       photoUrl=await compressToSmall(dataUrl);
+      showToast('📷 Photo saved (compressed)', 3000);
     }
     if(photoUrl){
       await ref.update({photoUrl});
     }
   }catch(e){
-    console.error('Photo upload failed silently:', e.message);
-    // Don't alert — job card is already saved, photo just won't show
+    console.error('[BG] Photo upload failed:', e.message);
+    showToast('⚠️ Photo not saved — job card data saved OK', 4000);
   }
 }
 
@@ -627,10 +641,17 @@ function handlePhoto(e){
 }
 
 async function uploadToStorage(dataUrl,jobnum){
-  const blob=await(await fetch(dataUrl)).blob();
-  const ref=fbStorage.ref('jobcards/'+Date.now()+'_'+jobnum.replace(/\W/g,'_')+'.jpg');
-  await ref.put(blob,{contentType:'image/jpeg'});
-  return await ref.getDownloadURL();
+  if(!fbStorage) throw new Error('Firebase Storage not initialised');
+  // Convert dataURL → Blob
+  const res=await fetch(dataUrl);
+  const blob=await res.blob();
+  const filename=Date.now()+'_'+jobnum.replace(/\W/g,'_')+'.jpg';
+  const ref=fbStorage.ref().child('jobcards/'+filename);
+  console.log('[BG] Uploading photo to Storage:', filename, Math.round(blob.size/1024)+'KB');
+  const snap=await ref.put(blob,{contentType:'image/jpeg'});
+  const url=await snap.ref.getDownloadURL();
+  console.log('[BG] Photo uploaded OK:', url);
+  return url;
 }
 
 // ═══════════════════════════════════════════════════
@@ -800,6 +821,20 @@ async function deleteJob(id){
   if(!confirm('Delete this job card? This cannot be undone.')) return;
   try{await rtdb.ref('jobcards/'+id).remove();}
   catch(e){alert('Delete failed: '+e.message);}
+}
+
+// ═══════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════
+let _toastTimer=null;
+function showToast(msg, duration=3000){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  if(_toastTimer) clearTimeout(_toastTimer);
+  if(duration>0){
+    _toastTimer=setTimeout(()=>t.classList.remove('show'), duration);
+  }
 }
 
 // ═══════════════════════════════════════════════════
