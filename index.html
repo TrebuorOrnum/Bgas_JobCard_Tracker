@@ -232,38 +232,34 @@ main{padding:16px;max-width:720px;margin:0 auto;}
 <!-- Connecting splash -->
 <div id="connectingScreen">
   <div class="cs-logo">
-    <svg width="64" height="60" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="64" height="80" viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg">
 <defs>
-  <linearGradient id="csB" x1="100" y1="2" x2="8" y2="92" gradientUnits="userSpaceOnUse">
+  <linearGradient id="csa" x1="50" y1="0" x2="50" y2="130" gradientUnits="userSpaceOnUse">
     <stop offset="0%"   stop-color="#00e8f8"/>
-    <stop offset="20%"  stop-color="#18b9e6"/>
-    <stop offset="55%"  stop-color="#1255b0"/>
-    <stop offset="100%" stop-color="#0a1e6e"/>
+    <stop offset="16%"  stop-color="#18c8e6"/>
+    <stop offset="38%"  stop-color="#1255b0"/>
+    <stop offset="66%"  stop-color="#e65100"/>
+    <stop offset="84%"  stop-color="#ef6c00"/>
+    <stop offset="100%" stop-color="#ffb300"/>
   </linearGradient>
-  <linearGradient id="csO" x1="8" y1="88" x2="72" y2="22" gradientUnits="userSpaceOnUse">
-    <stop offset="0%"   stop-color="#b71c1c"/>
-    <stop offset="40%"  stop-color="#e64a19"/>
-    <stop offset="100%" stop-color="#ff7043"/>
+  <linearGradient id="csb" x1="50" y1="10" x2="50" y2="130" gradientUnits="userSpaceOnUse">
+    <stop offset="0%"   stop-color="#0288d1"/>
+    <stop offset="38%"  stop-color="#0d47a1"/>
+    <stop offset="70%"  stop-color="#e64a19"/>
+    <stop offset="100%" stop-color="#ffa000"/>
   </linearGradient>
-  <linearGradient id="csG" x1="16" y1="82" x2="60" y2="30" gradientUnits="userSpaceOnUse">
-    <stop offset="0%"   stop-color="#bf360c"/>
+  <linearGradient id="csc" x1="50" y1="22" x2="50" y2="126" gradientUnits="userSpaceOnUse">
+    <stop offset="0%"   stop-color="#4fc3f7"/>
+    <stop offset="42%"  stop-color="#1976d2"/>
+    <stop offset="78%"  stop-color="#ff8f00"/>
     <stop offset="100%" stop-color="#ffca28"/>
   </linearGradient>
-  <filter id="csF" x="-15%" y="-15%" width="130%" height="130%">
-    <feGaussianBlur stdDeviation="2.5" result="b"/>
-    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-  </filter>
 </defs>
-<!-- Outer wing: sweeps from lower-left base to sharp cyan tip upper-right -->
-<path d="M 14 92 C 2 78 0 58 6 40 C 13 20 30 6 46 -2 C 55 -6 66 -6 72 -1 C 80 5 74 20 66 32 C 58 46 57 60 67 70 C 79 82 98 80 108 65 C 114 56 116 42 110 28 C 116 38 120 54 116 68 C 109 87 92 98 75 104 C 61 109 48 112 42 100 C 32 102 18 104 14 92 Z"
-      fill="url(#csB)" filter="url(#csF)"/>
-<!-- Orange inner sweep -->
-<path d="M 22 90 C 12 76 10 58 16 42 C 22 28 38 16 50 8 C 54 18 50 34 50 48 C 50 62 57 73 68 77 C 58 86 46 92 42 100 C 36 100 26 94 22 90 Z"
-      fill="url(#csO)"/>
-<!-- Gold inner curl -->
-<path d="M 32 88 C 24 76 24 60 30 48 C 35 38 44 32 50 24 C 52 34 50 46 53 58 C 55 68 63 73 70 68 C 65 79 56 87 50 94 C 44 96 34 92 32 88 Z"
-      fill="url(#csG)"/>
-    </svg>
+<path d="M50 4 C49 16,36 32,28 52 C18 76,14 102,16 118 C20 128,34 134,50 134 C66 134,80 128,84 118 C86 102,82 76,72 52 C64 32,51 16,50 4Z" fill="url(#csa)"/>
+<path d="M50 20 C49 30,40 46,34 64 C26 86,24 108,26 120 C30 130,40 134,50 134 C60 134,70 130,74 120 C76 108,74 86,66 64 C60 46,51 30,50 20Z" fill="url(#csb)" opacity="0.9"/>
+<path d="M50 42 C49 52,44 66,40 82 C36 98,36 114,38 122 C42 130,46 133,50 134 C54 133,58 130,62 122 C64 114,64 98,60 82 C56 66,51 52,50 42Z" fill="url(#csc)" opacity="0.88"/>
+<ellipse cx="50" cy="16" rx="6" ry="14" fill="white" opacity="0.52"/>
+</svg>
     <div>
       <div class="cs-name">Brackenfell<span class="gas">Gas</span></div>
       <div class="cs-tag">Job Card Manager</div>
@@ -276,38 +272,34 @@ main{padding:16px;max-width:720px;margin:0 auto;}
 <!-- HEADER -->
 <header>
   <div class="logo">
-    <svg width="42" height="40" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="38" height="48" viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg">
 <defs>
-  <linearGradient id="hdB" x1="100" y1="2" x2="8" y2="92" gradientUnits="userSpaceOnUse">
+  <linearGradient id="hda" x1="50" y1="0" x2="50" y2="130" gradientUnits="userSpaceOnUse">
     <stop offset="0%"   stop-color="#00e8f8"/>
-    <stop offset="20%"  stop-color="#18b9e6"/>
-    <stop offset="55%"  stop-color="#1255b0"/>
-    <stop offset="100%" stop-color="#0a1e6e"/>
+    <stop offset="16%"  stop-color="#18c8e6"/>
+    <stop offset="38%"  stop-color="#1255b0"/>
+    <stop offset="66%"  stop-color="#e65100"/>
+    <stop offset="84%"  stop-color="#ef6c00"/>
+    <stop offset="100%" stop-color="#ffb300"/>
   </linearGradient>
-  <linearGradient id="hdO" x1="8" y1="88" x2="72" y2="22" gradientUnits="userSpaceOnUse">
-    <stop offset="0%"   stop-color="#b71c1c"/>
-    <stop offset="40%"  stop-color="#e64a19"/>
-    <stop offset="100%" stop-color="#ff7043"/>
+  <linearGradient id="hdb" x1="50" y1="10" x2="50" y2="130" gradientUnits="userSpaceOnUse">
+    <stop offset="0%"   stop-color="#0288d1"/>
+    <stop offset="38%"  stop-color="#0d47a1"/>
+    <stop offset="70%"  stop-color="#e64a19"/>
+    <stop offset="100%" stop-color="#ffa000"/>
   </linearGradient>
-  <linearGradient id="hdG" x1="16" y1="82" x2="60" y2="30" gradientUnits="userSpaceOnUse">
-    <stop offset="0%"   stop-color="#bf360c"/>
+  <linearGradient id="hdc" x1="50" y1="22" x2="50" y2="126" gradientUnits="userSpaceOnUse">
+    <stop offset="0%"   stop-color="#4fc3f7"/>
+    <stop offset="42%"  stop-color="#1976d2"/>
+    <stop offset="78%"  stop-color="#ff8f00"/>
     <stop offset="100%" stop-color="#ffca28"/>
   </linearGradient>
-  <filter id="hdF" x="-15%" y="-15%" width="130%" height="130%">
-    <feGaussianBlur stdDeviation="2.5" result="b"/>
-    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-  </filter>
 </defs>
-<!-- Outer wing: sweeps from lower-left base to sharp cyan tip upper-right -->
-<path d="M 14 92 C 2 78 0 58 6 40 C 13 20 30 6 46 -2 C 55 -6 66 -6 72 -1 C 80 5 74 20 66 32 C 58 46 57 60 67 70 C 79 82 98 80 108 65 C 114 56 116 42 110 28 C 116 38 120 54 116 68 C 109 87 92 98 75 104 C 61 109 48 112 42 100 C 32 102 18 104 14 92 Z"
-      fill="url(#hdB)" filter="url(#hdF)"/>
-<!-- Orange inner sweep -->
-<path d="M 22 90 C 12 76 10 58 16 42 C 22 28 38 16 50 8 C 54 18 50 34 50 48 C 50 62 57 73 68 77 C 58 86 46 92 42 100 C 36 100 26 94 22 90 Z"
-      fill="url(#hdO)"/>
-<!-- Gold inner curl -->
-<path d="M 32 88 C 24 76 24 60 30 48 C 35 38 44 32 50 24 C 52 34 50 46 53 58 C 55 68 63 73 70 68 C 65 79 56 87 50 94 C 44 96 34 92 32 88 Z"
-      fill="url(#hdG)"/>
-    </svg>
+<path d="M50 4 C49 16,36 32,28 52 C18 76,14 102,16 118 C20 128,34 134,50 134 C66 134,80 128,84 118 C86 102,82 76,72 52 C64 32,51 16,50 4Z" fill="url(#hda)"/>
+<path d="M50 20 C49 30,40 46,34 64 C26 86,24 108,26 120 C30 130,40 134,50 134 C60 134,70 130,74 120 C76 108,74 86,66 64 C60 46,51 30,50 20Z" fill="url(#hdb)" opacity="0.9"/>
+<path d="M50 42 C49 52,44 66,40 82 C36 98,36 114,38 122 C42 130,46 133,50 134 C54 133,58 130,62 122 C64 114,64 98,60 82 C56 66,51 52,50 42Z" fill="url(#hdc)" opacity="0.88"/>
+<ellipse cx="50" cy="16" rx="6" ry="14" fill="white" opacity="0.52"/>
+</svg>
     <div class="logo-wordmark">
       <div class="logo-name">Brackenfell<span class="gas">Gas</span></div>
       <div class="logo-tagline">Your household gas supplier since 1988 · <b>BUILT on TRUST</b></div>
