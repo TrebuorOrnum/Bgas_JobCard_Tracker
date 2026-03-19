@@ -1,33 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="32" fill="#1a2f6b"/>
-  <defs>
-    <linearGradient id="ia" x1="96" y1="18" x2="96" y2="162" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#00e8f8"/>
-      <stop offset="16%"  stop-color="#18c8e6"/>
-      <stop offset="38%"  stop-color="#1255b0"/>
-      <stop offset="66%"  stop-color="#e65100"/>
-      <stop offset="84%"  stop-color="#ef6c00"/>
-      <stop offset="100%" stop-color="#ffb300"/>
-    </linearGradient>
-    <linearGradient id="ib" x1="96" y1="30" x2="96" y2="162" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#0288d1"/>
-      <stop offset="38%"  stop-color="#0d47a1"/>
-      <stop offset="70%"  stop-color="#e64a19"/>
-      <stop offset="100%" stop-color="#ffa000"/>
-    </linearGradient>
-    <linearGradient id="ic" x1="96" y1="50" x2="96" y2="158" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#4fc3f7"/>
-      <stop offset="42%"  stop-color="#1976d2"/>
-      <stop offset="78%"  stop-color="#ff8f00"/>
-      <stop offset="100%" stop-color="#ffca28"/>
-    </linearGradient>
-  </defs>
-  <!-- Outer flame -->
-  <path d="M96 20 C95 34,79 52,70 74 C58 102,54 130,56 148 C60 160,74 168,96 168 C118 168,132 160,136 148 C138 130,134 102,122 74 C113 52,97 34,96 20Z" fill="url(#ia)"/>
-  <!-- Mid flame -->
-  <path d="M96 40 C95 52,86 68,80 88 C70 114,68 138,70 150 C74 162,84 168,96 168 C108 168,118 162,122 150 C124 138,122 114,112 88 C106 68,97 52,96 40Z" fill="url(#ib)" opacity="0.9"/>
-  <!-- Inner core -->
-  <path d="M96 64 C95 74,89 88,85 104 C80 122,80 140,82 150 C86 160,91 165,96 166 C101 165,106 160,110 150 C112 140,112 122,107 104 C103 88,97 74,96 64Z" fill="url(#ic)" opacity="0.88"/>
-  <!-- White hot tip -->
-  <ellipse cx="96" cy="34" rx="8" ry="18" fill="white" opacity="0.5"/>
+  <rect width="192" height="192" rx="36" fill="#1a2f6b"/>
+  <g transform="translate(28,18) scale(1.38)">
+    <defs>
+      <linearGradient id="iW" x1="80" y1="8" x2="14" y2="88" gradientUnits="userSpaceOnUse">
+        <stop offset="0%"   stop-color="#00daf8"/>
+        <stop offset="20%"  stop-color="#12b8e2"/>
+        <stop offset="48%"  stop-color="#1258c0"/>
+        <stop offset="78%"  stop-color="#0e2c98"/>
+        <stop offset="100%" stop-color="#081a68"/>
+      </linearGradient>
+      <linearGradient id="iB" x1="55" y1="48" x2="80" y2="94" gradientUnits="userSpaceOnUse">
+        <stop offset="0%"   stop-color="#1868d0"/>
+        <stop offset="100%" stop-color="#0c2480"/>
+      </linearGradient>
+      <linearGradient id="iO" x1="48" y1="46" x2="66" y2="94" gradientUnits="userSpaceOnUse">
+        <stop offset="0%"   stop-color="#c01808"/>
+        <stop offset="28%"  stop-color="#e84408"/>
+        <stop offset="62%"  stop-color="#f48c0c"/>
+        <stop offset="100%" stop-color="#f7c400"/>
+      </linearGradient>
+    </defs>
+    <path d="M77 9 C70 7,62 9,54 14 C44 20,36 29,30 39 C23 50,18 62,16 72 C14 81,15 89,19 94 C23 98,30 99,37 97 C44 95,49 89,52 82 C56 73,57 63,60 55 C63 47,69 41,76 37 C83 33,88 25,86 17 C84 13,80 10,77 9 Z" fill="url(#iW)"/>
+    <path d="M61 49 C68 52,74 59,77 68 C80 76,77 85,71 90 C66 94,60 95,54 93 C50 91,47 86,49 81 C53 78,58 73,60 66 C62 59,60 52,62 47 C63 46,62 47,61 49 Z" fill="url(#iB)"/>
+    <path d="M50 47 C54 51,58 58,59 66 C60 74,57 83,51 88 C47 92,41 94,36 91 C31 88,29 81,31 74 C33 68,39 63,40 56 C41 50,38 44,41 40 C44 37,48 43,50 47 Z" fill="url(#iO)"/>
+    <circle cx="46" cy="77" r="10" fill="white"/>
+  </g>
 </svg>
