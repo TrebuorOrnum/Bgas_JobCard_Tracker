@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salary & OT Calculator with Logic</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .input-row { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .input-group { flex: 1; min-width: 200px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border-bottom: 1px solid #eee; padding: 12px 10px; text-align: left; }
+        th { background-color: #f8f9fa; color: #666; font-size: 12px; text-transform: uppercase; }
+        .result-val { font-weight: bold; color: #2ecc71; font-size: 18px; }
+        .logic-box { margin-top: 30px; padding: 20px; background: #fffbe6; border-left: 5px solid #f1c40f; border-radius: 4px; font-size: 14px; line-height: 1.6; }
+        .logic-title { font-weight: bold; margin-bottom: 10px; color: #856404; display: block; }
+        code { background: #eee; padding: 2px 4px; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 style="margin-top:0;">Salary & Overtime Calculator</h2>
+    
+    <div class="input-row">
+        <div class="input-group">
+            <label for="salary">Monthly Basic Salary:</label>
+            <input type="number" id="salary" value="5000" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label for="year">Select Year:</label>
+            <select id="year" onchange="calculate()"></select>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Calculation Result</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Annual Work Hours (<span id="yearLabel"></span>)</td>
+                <td><span id="annualHours" class="result-val">0</span> hrs</td>
+            </tr>
+            <tr>
+                <td>Base Hourly Rate</td>
+                <td><span id="hourlyRate" class="result-val">0.00</span> /hr</td>
+            </tr>
+            <tr>
+                <td>1.5x Overtime Rate</td>
+                <td><span id="rate15" style="font-weight:bold; color:#e67e22;">0.00</span> /hr</td>
+            </tr>
+            <tr>
+                <td>2.0x Overtime Rate</td>
+                <td><span id="rate20" style="font-weight:bold; color:#e67e22;">0.00</span> /hr</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- LOGIC BREAKDOWN SECTION -->
+    <div class="logic-box">
+        <span class="logic-title">How this is calculated:</span>
+        <div id="logicText">
+            <!-- Dynamic content injected here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    const yearSelect = document.getElementById('year');
+    const currentYear = new Date().getFullYear();
+
+    for (let i = 2013; i <= 2026; i++) {
+        let opt = document.createElement('option');
+        opt.value = i;
+        opt.innerHTML = i;
+        if (i === currentYear) opt.selected = true;
+        yearSelect.appendChild(opt);
+    }
+
+    function calculate() {
+        const salary = parseFloat(document.getElementById('salary').value) || 0;
+        const year = parseInt(document.getElementById('year').value);
+        
+        let monFriCount = 0;
+        let satCount = 0;
+        const startDate = new Date(year, 0, 1);
+        const endDate = new Date(year, 11, 31);
+
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            const day = d.getDay(); 
+            if (day >= 1 && day <= 5) monFriCount++; 
+            else if (day === 6) satCount++;
+        }
+
+        const totalHours = (monFriCount * 8) + (satCount * 5);
+        const annualSalary = salary * 12;
+        const baseHourly = totalHours > 0 ? (annualSalary / totalHours) : 0;
+
+        // Display results
+        document.getElementById('yearLabel').innerText = year;
+        document.getElementById('annualHours').innerText = totalHours.toLocaleString();
+        document.getElementById('hourlyRate').innerText = baseHourly.toFixed(2);
+        document.getElementById('rate15').innerText = (baseHourly * 1.5).toFixed(2);
+        document.getElementById('rate20').innerText = (baseHourly * 2.0).toFixed(2);
+
+        // Update logic text
+        document.getElementById('logicText').innerHTML = `
+            1. <b>Determine Work Days for ${year}:</b> Found ${monFriCount} weekdays and ${satCount} Saturdays.<br>
+            2. <b>Calculate Annual Hours:</b> (${monFriCount} days × 8h) + (${satCount} days × 5h) = <b>${totalHours.toLocaleString()} hours</b>.<br>
+            3. <b>Calculate Annual Salary:</b> Monthly $${salary.toLocaleString()} × 12 months = <b>$${annualSalary.toLocaleString()}</b>.<br>
+            4. <b>Find Hourly Rate:</b> $${annualSalary.toLocaleString()} ÷ ${totalHours.toLocaleString()} hrs = <b>$${baseHourly.toFixed(2)}/hr</b>.<br>
+            5. <b>Overtime:</b> $${baseHourly.toFixed(2)} × 1.5 = <b>$${(baseHourly * 1.5).toFixed(2)}</b> (1.5x) and × 2.0 = <b>$${(baseHourly * 2).toFixed(2)}</b> (2x).
+        `;
+    }
+
+    calculate();
+</script>
+
+</body>
+</html>

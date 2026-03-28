@@ -1,6 +1,6 @@
 // ── Brackenfell Gas Job Card Manager ──
 // Bump CACHE_NAME version any time you deploy updated files
-const CACHE_NAME = 'bg-jobs-v12';
+const CACHE_NAME = 'bg-jobs-v16';
 const ASSETS = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 // Install: cache assets and immediately take control
