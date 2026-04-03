@@ -31,7 +31,7 @@ export default {
     if (path === '/ocr/vision' && request.method === 'POST') {
       try {
         const { base64 } = await request.json();
-        const VISION_KEY = env.VISION_KEY || 'AIzaSyCeE9ZEGoBduSI78fKj43mYPL-Qlr6n0Eo';
+        const VISION_KEY = env.VISION_KEY || 'AIzaSyA_k3F4f5ZpMGoIFGmH2I9n3xMxrWzJSI0';
         
         const res = await fetch(
           `https://vision.googleapis.com/v1/images:annotate?key=${VISION_KEY}`,
