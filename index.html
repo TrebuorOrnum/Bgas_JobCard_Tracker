@@ -883,7 +883,7 @@ async function runOCR(){
     if(rawText){
       // Use raw text from Vision — faster, cheaper
       claudeBody={
-        model:'claude-sonnet-4-6',
+        model:'claude-3-5-sonnet-20240620"',
         max_tokens:400,
         messages:[{role:'user',content:
           `Raw OCR text from a Brackenfell Gas handwritten job card:\n\n${rawText}\n\n`+
