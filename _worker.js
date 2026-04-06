@@ -45,7 +45,7 @@ export default {
     if (path === "/ocr/claude" && request.method === "POST") {
       try {
         const body = await request.json();
-        const key = env.CLAUDE_KEY || "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";
+        const key = env.CLAUDE_KEY || "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"
 
         const res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
